@@ -17,10 +17,12 @@ export async function parseX12(readStream: Readable): Promise<void> {
 
   try {
     const ediStream = readStream.pipe(parser).pipe(grouper);
+
     for await (const data of ediStream) {
-      if (data.isGroup && data.name == "Heading") {
-        decodeHeading(data);
-      }
+      console.log(data);
+      // if (data.isGroup && data.name == "Heading") {
+      //   decodeHeading(data);
+      // }
     }
 
     console.log("Successfully finished processing the file.");

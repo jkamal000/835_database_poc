@@ -1,0 +1,10 @@
+export const N1_TABLE = "x12_n1";
+export const N2_TABLE = "x12_n2";
+export const N3_TABLE = "x12_n3";
+export const N4_TABLE = "x12_n4";
+export const REF_TABLE = "x12_ref";
+export const PER_TABLE = "x12_per";
+export const RDM_TABLE = "x12_rdm";
+export const X12_1000_TABLE = "x12_835_loop_1000";
+export const DTM_TABLE = "x12_dtm";
+export const HEADER_TABLE = "x12_835_header";
