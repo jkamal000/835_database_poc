@@ -1,0 +1,19 @@
+{
+  // reference: https://www.typescriptlang.org/tsconfig#compilerOptions
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib",
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2017",
+    "resolveJsonModule": true, //Allows importing modules with a ‘.json’ extension, which is a common practice in node projects: https://www.typescriptlang.org/tsconfig#resolveJsonModule
+    "esModuleInterop": true, // To fix 2 wrong TypeScript assumptions: https://www.typescriptlang.org/tsconfig#esModuleInterop
+    "skipLibCheck": true, // This prevents compilation error for node_modules. For some reasons, "exclude" doesn't really ignore the node_modules in compliation
+    "typeRoots": ["./src/types", "./node_modules/@types"]
+  },
+  "compileOnSave": true,
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/**/*", "lib/**/*"]
+}

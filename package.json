@@ -1,0 +1,37 @@
+{
+  "name": "sql_835_test",
+  "version": "1.0.0",
+  "description": "Converting EDI-835 files to sql database.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "npm run testParallel",
+    "build": "rm -rf ./lib && mkdir -p lib && tsc",
+    "lint": "DEBUG=eslint:cli-engine eslint . --max-warnings=0 --fix",
+    "testParallel": "mocha --timeout 15000 -p --jobs 2 -r ts-node/register 'src/**/*.spec.ts' --reporter spec",
+    "testSerial": "mocha --timeout 15000 -r ts-node/register 'src/**/*.spec.ts' --reporter spec",
+    "debugTest": "mocha --timeout 0 -r ts-node/register 'src/**/*.spec.ts' --reporter spec"
+  },
+  "author": "Jaraad Kamal <jkamal@pistevodecision.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/compat": "^1.2.9",
+    "@types/chai": "^5.2.2",
+    "@types/mocha": "^10.0.10",
+    "@types/sinon": "^17.0.4",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
+    "chai": "^6.0.1",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "mocha": "^11.7.1",
+    "prettier": "^3.6.2",
+    "sinon": "^21.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "x12-parser": "^1.3.0"
+  }
+}
