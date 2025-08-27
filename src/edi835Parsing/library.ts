@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import type { Database as SqliteDatabaseType } from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import * as constants from "./constants";
+import { constants } from "./constants";
 
 const DB_FILE_NAME = "db.sqlite";
 
@@ -19,14 +19,14 @@ export function create835Tables(): SqliteDatabaseType {
 
   /// creating tables needed for header portion
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.HEADER_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.compositeTables.HEADER_TABLE} (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`
   );
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.ST_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.ST_TABLE} (
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
@@ -36,48 +36,48 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.BPR_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.BPR_TABLE} (
       id                                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                             INTEGER NOT NULL,
 
       transaction_handling_code                 VARCHAR(2) NOT NULL,
-      monetary_amount                           DECIMAL(18,2) NOT NULL,
+      payment_amount                            DECIMAL(18,2) NOT NULL,
       credit_debit_flag                         VARCHAR(1) NOT NULL,
       payment_method_code                       VARCHAR(3) NOT NULL,
       payment_format_code                       VARCHAR(10),
 
-      dfi_id_number_qualifier_1                 VARCHAR(2),
-      dfi_id_number_1                           VARCHAR(12),
-      account_number_qualifier_1                VARCHAR(3),
-      account_number_1                          VARCHAR(35),
+      odfi_id_number_qualifier                  VARCHAR(2),
+      odfi_id_number                            VARCHAR(12),
+      payer_financial_asset_type                VARCHAR(3),
+      payer_account_number                      VARCHAR(35),
       originating_company_id                    VARCHAR(10),
       originating_company_supplemental_code     VARCHAR(9),
 
-      dfi_id_number_qualifier_2                 VARCHAR(2),
-      dfi_id_number_2                           VARCHAR(12),
-      account_number_qualifier_2                VARCHAR(3),
-      account_number_2                          VARCHAR(35),
-      date                                      DATE,
-      business_function_code                    VARCHAR(3),
+      rdfi_id_number_qualifier                  VARCHAR(2),
+      rdfi_id_number                            VARCHAR(12),
+      receiver_asset_type                       VARCHAR(3),
+      receiver_account_number                   VARCHAR(35),
+      payment_effective_date                    DATE,
+      reason_for_payment                        VARCHAR(3),
 
-      dfi_id_number_qualifier_3                 VARCHAR(2),
-      dfi_id_number_3                           VARCHAR(12),
-      account_number_qualifier_3                VARCHAR(20),
-      account_number_3                          VARCHAR(35),
+      id_number_qualifier_for_returns           VARCHAR(2),
+      dfi_id_number_for_returns                 VARCHAR(12),
+      asset_type_for_return_account             VARCHAR(20),
+      account_number_for_return                 VARCHAR(35),
 
       x12_header_id                             INTEGER NOT NULL,
       created_at                                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.NTE_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.NTE_TABLE} (
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
@@ -86,28 +86,28 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.TRN_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.TRN_TABLE} (
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
       trace_type_code           VARCHAR(2) NOT NULL,
-      reference_id_1            VARCHAR(80) NOT NULL,
-      originating_company_id    VARCHAR(10),
-      reference_id_2            VARCHAR(80),
+      transaction_id            VARCHAR(80) NOT NULL,
+      organization_id           VARCHAR(10),
+      subdivision_id            VARCHAR(80),
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.CUR_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.CUR_TABLE} (
       id                                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                             INTEGER NOT NULL,
 
@@ -142,12 +142,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id                             INTEGER NOT NULL,
       created_at                                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.N1_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N1_TABLE} (
       id                                INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                     INTEGER NOT NULL,
 
@@ -165,7 +165,7 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.N2_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N2_TABLE} (
       id                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order       INTEGER NOT NULL,
 
@@ -174,12 +174,12 @@ export function create835Tables(): SqliteDatabaseType {
       x12_n1_id           INTEGER NOT NULL,
 
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.N1_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.segmentTables.N1_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.N3_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N3_TABLE} (
       id                      INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order           INTEGER NOT NULL,
 
@@ -188,12 +188,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_n1_id               INTEGER NOT NULL,
       created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.N1_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.segmentTables.N1_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.N4_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N4_TABLE} (
       id                          INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order               INTEGER NOT NULL,
 
@@ -207,12 +207,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_n1_id                   INTEGER NOT NULL,
       created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.N1_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.segmentTables.N1_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.REF_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.REF_TABLE} (
       id                    INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order         INTEGER NOT NULL,
 
@@ -236,7 +236,7 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.PER_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.PER_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
 
@@ -261,12 +261,12 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.RDM_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.RDM_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
 
       report_transmission_code            VARCHAR(2) NOT NULL,
-      name                                VARCHAR(60),
+      third_party_remittance_processor    VARCHAR(60),
       communication_number                VARCHAR(2048),
 
       ref_id_qualifier_1_1                VARCHAR(3) NOT NULL,    -- RDM04-01
@@ -285,12 +285,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_1000_id                         INTEGER,
       created_at                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_1000_id) REFERENCES ${constants.X12_1000_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_1000_id) REFERENCES ${constants.compositeTables.X12_1000_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.DTM_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.DTM_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
 
@@ -308,14 +308,51 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.X12_1000_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${constants.compositeTables.X12_1000_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
       x12_header_id                       INTEGER NOT NULL,
       created_at                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.HEADER_TABLE}(id)
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id)
     );`
   ).run();
+
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.TS3_TABLE} (
+      id                                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                           INTEGER NOT NULL,
+
+      provider_number                         VARCHAR(80) NOT NULL,
+      facility_code_value                     VARCHAR(3) NOT NULL,
+      fiscal_year_end_date                    DATE,
+      number_of_claims                        DECIMAL(15,0),
+      total_reported_charges                  DECIMAL(18, 2),
+      total_covered_charges                   DECIMAL(18, 2),
+      total_noncovered_charges                DECIMAL(18, 2),
+      total_denied_charges                    DECIMAL(18, 2),
+      total_provider_payment                  DECIMAL(18, 2),
+      total_interest_paid                     DECIMAL(18, 2),
+      total_contractual_adjustment            DECIMAL(18, 2),
+      total_gramm_rudman_reduction            DECIMAL(18, 2),
+      total_msp_primary_payer_amount          DECIMAL(18, 2),
+      total_blood_deductible_amount           DECIMAL(18, 2),
+      non_lab_charges                         DECIMAL(18, 2),
+      total_coinsurance_amount                DECIMAL(18, 2),
+      hcpcs_reported_charges                  DECIMAL(18, 2),
+      total_hcpcs_payable_amount              DECIMAL(18, 2),
+      total_deductible_amount                 DECIMAL(18, 2),
+      total_professional_component_amount     DECIMAL(18, 2),
+      total_msp_patient_liability_met         DECIMAL(18, 2),
+      total_patient_reimbursement             DECIMAL(18, 2),
+      total_pip_number_of_claims              DECIMAL(15, 1),
+      total_pip_adjustment                    DECIMAL(18, 2),
+
+      x12_2000_id                             INTEGER NOT NULL,
+      created_at                              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_2000_id) REFERENCES ${constants.compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
+    )
+    `
+  );
 
   return db;
 }

@@ -1,15 +1,23 @@
-export const N1_TABLE = "x12_n1";
-export const N2_TABLE = "x12_n2";
-export const N3_TABLE = "x12_n3";
-export const N4_TABLE = "x12_n4";
-export const REF_TABLE = "x12_ref";
-export const PER_TABLE = "x12_per";
-export const RDM_TABLE = "x12_rdm";
-export const X12_1000_TABLE = "x12_835_loop_1000";
-export const DTM_TABLE = "x12_dtm";
-export const HEADER_TABLE = "x12_835_header";
-export const ST_TABLE = "x12_st";
-export const BPR_TABLE = "x12_bpr";
-export const NTE_TABLE = "x12_nte";
-export const TRN_TABLE = "x12_trn";
-export const CUR_TABLE = "x12_cur";
+export const constants = {
+  segmentTables: {
+    N1_TABLE: "x12_n1",
+    N2_TABLE: "x12_n2",
+    N3_TABLE: "x12_n3",
+    N4_TABLE: "x12_n4",
+    REF_TABLE: "x12_ref",
+    PER_TABLE: "x12_per",
+    RDM_TABLE: "x12_rdm",
+    DTM_TABLE: "x12_dtm",
+    ST_TABLE: "x12_st",
+    BPR_TABLE: "x12_bpr",
+    NTE_TABLE: "x12_nte",
+    TRN_TABLE: "x12_trn",
+    CUR_TABLE: "x12_cur",
+    TS3_TABLE: "x12_ts3",
+  },
+  compositeTables: {
+    HEADER_TABLE: "x12_835_header",
+    X12_1000_TABLE: "x12_835_loop_1000",
+    X12_2000_TABLE: "x12_835_loop_2000",
+  },
+};
