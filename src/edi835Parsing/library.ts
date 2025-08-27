@@ -23,7 +23,7 @@ export function create835Tables(): SqliteDatabaseType {
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`
-  );
+  ).run();
 
   db.prepare(
     `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.ST_TABLE} (
@@ -352,7 +352,50 @@ export function create835Tables(): SqliteDatabaseType {
       FOREIGN KEY (x12_2000_id) REFERENCES ${constants.compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
     )
     `
-  );
+  ).run();
+
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.TS2_TABLE} (
+      id                                                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                                         INTEGER NOT NULL,
+
+      total_drg_amount                                      DECIMAL(18, 2),
+      total_federal_specific_amount                         DECIMAL(18, 2),
+      total_hospital_specific_amount                        DECIMAL(18, 2),
+      total_disproportionate_share_amount                   DECIMAL(18, 2),
+      total_capital_amount                                  DECIMAL(18, 2),
+      total_medical_education_amount                        DECIMAL(18, 2),
+      total_number_of_outlier_days                          DECIMAL(15, 0),
+      total_outlier_amount                                  DECIMAL(18, 2),
+      total_cost_outlier_amount                             DECIMAL(18, 2),
+      drg_average_length_of_stay                            DECIMAL(15, 0),
+      total_number_of_discharges                            DECIMAL(15, 0),
+      total_number_of_cost_report_days                      DECIMAL(15, 0),
+      total_number_of_covered_days                          DECIMAL(15, 0),
+      total_number_of_noncovered_days                       DECIMAL(15, 0),
+      total_msp_pass_through_for_non_medicare               DECIMAL(18, 2),
+      average_drg_weight                                    DECIMAL(15, 0),
+      total_pps_capital_federal_specific_drg_amount         DECIMAL(18, 2),
+      total_pps_capital_hospital_specific_drg_amount        DECIMAL(18, 2),
+      total_pps_disproportionate_share_hospital_drg_amount  DECIMAL(18, 2),
+
+
+      x12_2000_id                                           INTEGER NOT NULL,
+      created_at                                            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_2000_id) REFERENCES ${constants.compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
+    )
+    `
+  ).run();
+
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${constants.compositeTables.X12_2000_TABLE} (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order   INTEGER NOT NULL, -- takes place of transaction set line number (LX)
+      x12_header_id   INTEGER NOT NULL,
+      created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+    );`
+  ).run();
 
   return db;
 }

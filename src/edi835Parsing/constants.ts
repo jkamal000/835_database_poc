@@ -14,10 +14,12 @@ export const constants = {
     TRN_TABLE: "x12_trn",
     CUR_TABLE: "x12_cur",
     TS3_TABLE: "x12_ts3",
+    TS2_TABLE: "x12_ts2",
   },
   compositeTables: {
     HEADER_TABLE: "x12_835_header",
     X12_1000_TABLE: "x12_835_loop_1000",
     X12_2000_TABLE: "x12_835_loop_2000",
+    X12_2100_TABLE: "x12_835_loop_2100",
   },
 };
