@@ -374,7 +374,7 @@ export function create835Tables(): SqliteDatabaseType {
       total_number_of_covered_days                          DECIMAL(15, 0),
       total_number_of_noncovered_days                       DECIMAL(15, 0),
       total_msp_pass_through_for_non_medicare               DECIMAL(18, 2),
-      average_drg_weight                                    DECIMAL(15, 0),
+      average_drg_weight                                    DECIMAL(15, 4),
       total_pps_capital_federal_specific_drg_amount         DECIMAL(18, 2),
       total_pps_capital_hospital_specific_drg_amount        DECIMAL(18, 2),
       total_pps_disproportionate_share_hospital_drg_amount  DECIMAL(18, 2),
@@ -395,6 +395,43 @@ export function create835Tables(): SqliteDatabaseType {
       created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.CLP_TABLE} (
+      id                                              INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                                   INTEGER NOT NULL,
+      
+      claim_submitter_id                              VARCHAR(38),
+      claim_status_code                               VARCHAR(2),
+      submitted_charges                               DECIMAL(18, 2),
+      amount_paid                                     DECIMAL(18, 2),
+      patient_responsibility                          DECIMAL(18, 2),
+      claim_filing_indicator_code                     VARCHAR(2),
+      payer_internal_control_number                   VARCHAR(80),
+      facility_code_value                             VARCHAR(3),
+      claim_frequency_type_code                       VARCHAR(1),
+      patient_discharge_status                        VARCHAR(2),
+
+      health_care_code_list_qualifier_code            VARCHAR(3) NOT NULL,  -- C022-01
+      health_care_industry_code                       VARCHAR(30) NOT NULL, -- C022-02
+      health_care_date_time_period_format_qualifier   VARCHAR(3),           -- C022-03
+      health_care_date_time_period                    VARCHAR(35),          -- C022-04
+      health_care_monetary_amount                     DECIMAL(18, 2),       -- C022-05
+      health_care_quantity                            DECIMAL(15, 0),       -- C022-06
+      health_care_code_list_version_id                VARCHAR(30),          -- C022-07
+      code_ending_value                               VARCHAR(30),          -- C022-08
+      code_source_959_present_on_admission_indicator  VARCHAR(30),          -- C022-09
+      health_care_industry_attribute_code             VARCHAR(30),          -- C022-10
+
+      drg_weight                                      DECIMAL(15, 4),
+      discharge_fraction                              DECIMAL(10, 2),
+      patient_authorization_to_coordinate_benefits    VARCHAR(1),
+      exchange_rate                                   DECIMAL(10, 6),
+      source_of_payment_typology_code                 VARCHAR(6),
+    );
+    `
   ).run();
 
   return db;
