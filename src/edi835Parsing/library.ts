@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import type { Database as SqliteDatabaseType } from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import { constants } from "./constants";
+import { segmentTables, compositeTables, indexNames } from "./constants";
 
 const DB_FILE_NAME = "db.sqlite";
 
@@ -19,14 +19,14 @@ export function create835Tables(): SqliteDatabaseType {
 
   /// creating tables needed for header portion
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.compositeTables.HEADER_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${compositeTables.HEADER_TABLE} (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.ST_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.ST_TABLE} (
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
@@ -36,12 +36,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.BPR_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.BPR_TABLE} (
       id                                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                             INTEGER NOT NULL,
 
@@ -72,12 +72,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id                             INTEGER NOT NULL,
       created_at                                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.NTE_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.NTE_TABLE} (
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
@@ -86,12 +86,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.TRN_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.TRN_TABLE} (
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
@@ -102,12 +102,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.CUR_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.CUR_TABLE} (
       id                                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                             INTEGER NOT NULL,
 
@@ -142,12 +142,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_header_id                             INTEGER NOT NULL,
       created_at                                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N1_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.N1_TABLE} (
       id                                INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                     INTEGER NOT NULL,
 
@@ -165,7 +165,7 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N2_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.N2_TABLE} (
       id                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order       INTEGER NOT NULL,
 
@@ -174,12 +174,12 @@ export function create835Tables(): SqliteDatabaseType {
       x12_n1_id           INTEGER NOT NULL,
 
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.segmentTables.N1_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_n1_id) REFERENCES ${segmentTables.N1_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N3_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.N3_TABLE} (
       id                      INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order           INTEGER NOT NULL,
 
@@ -188,12 +188,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_n1_id               INTEGER NOT NULL,
       created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.segmentTables.N1_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_n1_id) REFERENCES ${segmentTables.N1_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.N4_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.N4_TABLE} (
       id                          INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order               INTEGER NOT NULL,
 
@@ -208,12 +208,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_n1_id                   INTEGER NOT NULL,
       created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_n1_id) REFERENCES ${constants.segmentTables.N1_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_n1_id) REFERENCES ${segmentTables.N1_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.REF_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.REF_TABLE} (
       id                    INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order         INTEGER NOT NULL,
 
@@ -237,7 +237,7 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.PER_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.PER_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
 
@@ -262,7 +262,7 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.RDM_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.RDM_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
 
@@ -286,12 +286,12 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_1000_id                         INTEGER,
       created_at                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_1000_id) REFERENCES ${constants.compositeTables.X12_1000_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_1000_id) REFERENCES ${compositeTables.X12_1000_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.DTM_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.DTM_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
 
@@ -309,17 +309,17 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.compositeTables.X12_1000_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${compositeTables.X12_1000_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
       x12_header_id                       INTEGER NOT NULL,
       created_at                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id)
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id)
     );`
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.TS3_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.TS3_TABLE} (
       id                                      INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                           INTEGER NOT NULL,
 
@@ -350,13 +350,13 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_2000_id                             INTEGER NOT NULL,
       created_at                              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2000_id) REFERENCES ${constants.compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_2000_id) REFERENCES ${compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
     )
     `
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.segmentTables.TS2_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.TS2_TABLE} (
       id                                                    INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                                         INTEGER NOT NULL,
 
@@ -383,26 +383,26 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_2000_id                                           INTEGER NOT NULL,
       created_at                                            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2000_id) REFERENCES ${constants.compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_2000_id) REFERENCES ${compositeTables.X12_2000_TABLE}(id) ON DELETE CASCADE
     )
     `
   ).run();
 
   db.prepare(
-    `CREATE TABLE IF NOT EXISTS ${constants.compositeTables.X12_2000_TABLE} (
+    `CREATE TABLE IF NOT EXISTS ${compositeTables.X12_2000_TABLE} (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
 
       segment_order   INTEGER NOT NULL, -- takes place of transaction set line number (LX)
 
       x12_header_id   INTEGER NOT NULL,
       created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${constants.compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_header_id) REFERENCES ${compositeTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.CLP_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.CLP_TABLE} (
       id                                              INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                                   INTEGER NOT NULL,
       
@@ -417,7 +417,6 @@ export function create835Tables(): SqliteDatabaseType {
       claim_frequency_type_code                       VARCHAR(1),           -- CLP-09
       patient_discharge_status                        VARCHAR(2),           -- CLP-10
 
-      health_care_code_list_qualifier_code            VARCHAR(3) NOT NULL,  -- CLP-11-01 C022-01
       health_care_code_list_qualifier_code            VARCHAR(3) NOT NULL,  -- CLP-11-01 C022-01
       health_care_industry_code                       VARCHAR(30) NOT NULL, -- CLP-11-02 C022-02
       health_care_date_time_period_format_qualifier   VARCHAR(3),           -- CLP-11-03 C022-03
@@ -437,17 +436,17 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_2100_id                                     INTEGER NOT NULL,
       created_at                                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2100) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_2100_id) REFERENCES ${compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
     );
     `
   ).run();
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.CAS_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.CAS_TABLE} (
       id                                INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                     INTEGER NOT NULL,
-      
+
       claim_adjustment_group_code       VARCHAR(10) NOT NULL,       -- CAS-01
       claim_adjustment_reason_code_1    VARCHAR(5) NOT NULL,        -- CAS-02
       adjustment_amount_1               DECIMAL(18, 2) NOT NULL,    -- CAS-03
@@ -471,13 +470,13 @@ export function create835Tables(): SqliteDatabaseType {
       parent_type                       VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
       parent_id                         INTEGER NOT NULL,
       created_at                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ); 
+    );
     `
   ).run();
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.RAS_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.RAS_TABLE} (
       id                                    INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                         INTEGER NOT NULL,
 
@@ -503,7 +502,7 @@ export function create835Tables(): SqliteDatabaseType {
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.NM1_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.NM1_TABLE} (
       id                                    INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                         INTEGER NOT NULL,
 
@@ -529,7 +528,7 @@ export function create835Tables(): SqliteDatabaseType {
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.MIA_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.MIA_TABLE} (
       id                                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                                       INTEGER NOT NULL,
 
@@ -560,14 +559,14 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_2100_id                                         INTEGER NOT NULL,
       created_at                                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2100_id) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
-    ); 
+      FOREIGN KEY (x12_2100_id) REFERENCES ${compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+    );
     `
   ).run();
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.MOA_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.MOA_TABLE} (
       id                                          INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                               INTEGER NOT NULL,
 
@@ -583,14 +582,14 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_2100_id                 INTEGER NOT NULL,
       created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2100_id) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_2100_id) REFERENCES ${compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
     );
     `
   ).run();
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.AMT_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.AMT_TABLE} (
       id                         INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order              INTEGER NOT NULL,
 
@@ -607,7 +606,7 @@ export function create835Tables(): SqliteDatabaseType {
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.QTY_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.QTY_TABLE} (
       id                          INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order               INTEGER NOT NULL,
 
@@ -639,7 +638,7 @@ export function create835Tables(): SqliteDatabaseType {
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.K3_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.K3_TABLE} (
       id                          INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order               INTEGER NOT NULL,
 
@@ -659,8 +658,7 @@ export function create835Tables(): SqliteDatabaseType {
       multiplier_4                DECIMAL(10, 4),           -- K3-03-12 C001-12
       units_5                     VARCHAR(2),               -- K3-03-13 C001-13
       exponent_5                  DECIMAL(15, 4),           -- K3-03-14 C001-14
-      multiplier_5                DECIMAL(10, 4),           -- K3-03-15 C001-15 
-
+      multiplier_5                DECIMAL(10, 4),           -- K3-03-15 C001-15
 
       parent_type                VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
       parent_id                  INTEGER NOT NULL,
@@ -671,7 +669,7 @@ export function create835Tables(): SqliteDatabaseType {
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.LQ_TABLE} (
+    CREATE TABLE IF NOT EXISTS ${segmentTables.LQ_TABLE} (
       id                          INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order               INTEGER NOT NULL,
 
@@ -680,10 +678,148 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_2100_id                 INTEGER NOT NULL,
       created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2100_id) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_2100_id) REFERENCES ${compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
     );
     `
   ).run();
 
+  createIndices(db);
   return db;
+}
+
+function createIndices(db: SqliteDatabaseType): void {
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.ST_PARENT_IDX} ` +
+      `ON ${segmentTables.ST_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.BPR_PARENT_IDX} ` +
+      `ON ${segmentTables.BPR_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.NTE_PARENT_IDX} ` +
+      `ON ${segmentTables.NTE_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.TRN_PARENT_IDX} ` +
+      `ON ${segmentTables.TRN_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.CUR_PARENT_IDX} ` +
+      `ON ${segmentTables.CUR_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.N1_PARENT_IDX} ` +
+      `ON ${segmentTables.N1_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.N2_PARENT_IDX} ` +
+      `ON ${segmentTables.N2_TABLE}(x12_n1_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.N3_PARENT_IDX} ` +
+      `ON ${segmentTables.N3_TABLE}(x12_n1_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.N4_PARENT_IDX} ` +
+      `ON ${segmentTables.N4_TABLE}(x12_n1_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.REF_PARENT_IDX} ` +
+      `ON ${segmentTables.REF_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.PER_PARENT_IDX} ` +
+      `ON ${segmentTables.PER_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.RDM_PARENT_IDX} ` +
+      `ON ${segmentTables.RDM_TABLE}(x12_1000_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.DTM_PARENT_IDX} ` +
+      `ON ${segmentTables.DTM_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.X12_1000_PARENT_IDX} ` +
+      `ON ${compositeTables.X12_1000_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.TS3_PARENT_IDX} ` +
+      `ON ${segmentTables.TS3_TABLE}(x12_2000_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.TS2_PARENT_IDX} ` +
+      `ON ${segmentTables.TS2_TABLE}(x12_2000_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.X12_2000_PARENT_IDX} ` +
+      `ON ${compositeTables.X12_2000_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.CLP_PARENT_IDX} ` +
+      `ON ${segmentTables.CLP_TABLE}(x12_2100_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.CAS_PARENT_IDX} ` +
+      `ON ${segmentTables.CAS_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.RAS_PARENT_IDX} ` +
+      `ON ${segmentTables.RAS_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.NM1_PARENT_IDX} ` +
+      `ON ${segmentTables.NM1_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.MIA_PARENT_IDX} ` +
+      `ON ${segmentTables.MIA_TABLE}(x12_2100_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.MOA_PARENT_IDX} ` +
+      `ON ${segmentTables.MOA_TABLE}(x12_2100_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.AMT_PARENT_IDX} ` +
+      `ON ${segmentTables.AMT_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.QTY_PARENT_IDX} ` +
+      `ON ${segmentTables.QTY_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.K3_PARENT_IDX} ` +
+      `ON ${segmentTables.K3_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.LQ_PARENT_IDX} ` +
+      `ON ${segmentTables.LQ_TABLE}(x12_2100_id);`
+  ).run();
 }
