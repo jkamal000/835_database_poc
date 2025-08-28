@@ -17,6 +17,8 @@ export const constants = {
     TS2_TABLE: "x12_ts2",
     CLP_TABLE: "x12_clp",
     CAS_TABLE: "x12_cas",
+    RAS_TABLE: "x12_ras",
+    NM1_TABLE: "x12_nm1",
   },
   compositeTables: {
     HEADER_TABLE: "x12_835_header",

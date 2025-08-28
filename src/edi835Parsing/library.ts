@@ -158,9 +158,9 @@ export function create835Tables(): SqliteDatabaseType {
       entity_relationship_code          VARCHAR(2),               -- N1-05
       related_entity_identifier_code    VARCHAR(3),               -- N1-06
 
-      created_at                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       parent_type                       VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
-      parent_id                         INTEGER NOT NULL
+      parent_id                         INTEGER NOT NULL,
+      created_at                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`
   ).run();
 
@@ -468,11 +468,63 @@ export function create835Tables(): SqliteDatabaseType {
       adjustment_amount_6               DECIMAL(18, 2),             -- CAS-18
       units_of_service_adjusted_6       DECIMAL(15, 0),             -- CAS-19
 
-      created_at                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       parent_type                       VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
-      parent_id                         INTEGER NOT NULL
+      parent_id                         INTEGER NOT NULL,
+      created_at                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ); 
     `
-  );
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.RAS_TABLE} (
+      id                                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                         INTEGER NOT NULL,
+
+      amount_of_adjustment                  DECIMAL(18, 2) NOT NULL,  -- RAS-01
+      claim_adjustment_group_code           VARCHAR(10) NOT NULL,     -- RAS-02
+
+      adjustment_reason_code                VARCHAR(5) NOT NULL,      -- RAS-03-01 C058-01
+      adjustment_code_list_qualifier_code   VARCHAR(3),               -- RAS-03-02 C058-02
+      industry_code_1                       VARCHAR(30),              -- RAS-03-03 C058-03
+      industry_code_2                       VARCHAR(30),              -- RAS-03-04 C058-04
+      industry_code_3                       VARCHAR(30),              -- RAS-03-05 C058-05
+      industry_code_4                       VARCHAR(30),              -- RAS-03-06 C058-06
+      industry_code_5                       VARCHAR(30),              -- RAS-03-07 C058-07
+
+      units_of_service_adjusted             DECIMAL(15, 0),           -- RAS-04
+
+      parent_type                           VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
+      parent_id                             INTEGER NOT NULL,
+      created_at                            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.NM1_TABLE} (
+      id                                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                         INTEGER NOT NULL,
+
+      entity_id_code                        VARCHAR(3) NOT NULL,        -- NM1-01
+      entity_type_qualifier                 VARCHAR(1) NOT NULL,        -- NM1-02
+      last_name_or_organization_name        VARCHAR(80),                -- NM1-03
+      first_name                            VARCHAR(35),                -- NM1-04
+      middle_name                           VARCHAR(25),                -- NM1-05
+      name_prefix                           VARCHAR(10),                -- NM1-06
+      name_suffix                           VARCHAR(10),                -- NM1-07
+      id_code_qualifier                     VARCHAR(2),                 -- NM1-08
+      id_code                               VARCHAR(80),                -- NM1-09
+      entity_relationship_code              VARCHAR(2),                 -- NM1-10
+      entity_id_code_2                      VARCHAR(3),                 -- NM1-11
+      last_name_or_organization_name_2      VARCHAR(80),                -- NM1-12
+
+      parent_type                           VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
+      parent_id                             INTEGER NOT NULL,
+      created_at                            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    `
+  ).run();
   return db;
 }
