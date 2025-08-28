@@ -366,14 +366,14 @@ export function create835Tables(): SqliteDatabaseType {
       total_disproportionate_share_amount                   DECIMAL(18, 2),   --TS2-04
       total_capital_amount                                  DECIMAL(18, 2),   --TS2-05
       total_medical_education_amount                        DECIMAL(18, 2),   --TS2-06
-      total_number_of_outlier_days                          DECIMAL(15, 0),   --TS2-07
+      total_number_of_outlier_days                          DECIMAL(15, 4),   --TS2-07
       total_outlier_amount                                  DECIMAL(18, 2),   --TS2-08
       total_cost_outlier_amount                             DECIMAL(18, 2),   --TS2-09
-      drg_average_length_of_stay                            DECIMAL(15, 0),   --TS2-10
-      total_number_of_discharges                            DECIMAL(15, 0),   --TS2-11
-      total_number_of_cost_report_days                      DECIMAL(15, 0),   --TS2-12
-      total_number_of_covered_days                          DECIMAL(15, 0),   --TS2-13
-      total_number_of_noncovered_days                       DECIMAL(15, 0),   --TS2-14
+      drg_average_length_of_stay                            DECIMAL(15, 4),   --TS2-10
+      total_number_of_discharges                            DECIMAL(15, 4),   --TS2-11
+      total_number_of_cost_report_days                      DECIMAL(15, 4),   --TS2-12
+      total_number_of_covered_days                          DECIMAL(15, 4),   --TS2-13
+      total_number_of_noncovered_days                       DECIMAL(15, 4),   --TS2-14
       total_msp_pass_through_for_non_medicare               DECIMAL(18, 2),   --TS2-15
       average_drg_weight                                    DECIMAL(15, 4),   --TS2-16
       total_pps_capital_federal_specific_drg_amount         DECIMAL(18, 2),   --TS2-17
@@ -423,14 +423,14 @@ export function create835Tables(): SqliteDatabaseType {
       health_care_date_time_period_format_qualifier   VARCHAR(3),           -- CLP-11-03 C022-03
       health_care_date_time_period                    VARCHAR(35),          -- CLP-11-04 C022-04
       health_care_monetary_amount                     DECIMAL(18, 2),       -- CLP-11-05 C022-05
-      health_care_quantity                            DECIMAL(15, 0),       -- CLP-11-06 C022-06
+      health_care_quantity                            DECIMAL(15, 4),       -- CLP-11-06 C022-06
       health_care_code_list_version_id                VARCHAR(30),          -- CLP-11-07 C022-07
       code_ending_value                               VARCHAR(30),          -- CLP-11-08 C022-08
       code_source_959_present_on_admission_indicator  VARCHAR(30),          -- CLP-11-09 C022-09
       health_care_industry_attribute_code             VARCHAR(30),          -- CLP-11-10 C022-10
 
       drg_weight                                      DECIMAL(15, 4),       -- CLP-12
-      discharge_fraction                              DECIMAL(10, 2),       -- CLP-13
+      discharge_fraction                              DECIMAL(10, 4),       -- CLP-13
       patient_authorization_to_coordinate_benefits    VARCHAR(1),           -- CLP-14
       exchange_rate                                   DECIMAL(10, 6),       -- CLP-15
       source_of_payment_typology_code                 VARCHAR(6),           -- CLP-16
@@ -451,22 +451,22 @@ export function create835Tables(): SqliteDatabaseType {
       claim_adjustment_group_code       VARCHAR(10) NOT NULL,       -- CAS-01
       claim_adjustment_reason_code_1    VARCHAR(5) NOT NULL,        -- CAS-02
       adjustment_amount_1               DECIMAL(18, 2) NOT NULL,    -- CAS-03
-      units_of_service_adjusted_1       DECIMAL(15, 0),             -- CAS-04
+      units_of_service_adjusted_1       DECIMAL(15, 4),             -- CAS-04
       claim_adjustment_reason_code_2    VARCHAR(5),                 -- CAS-05
       adjustment_amount_2               DECIMAL(18, 2),             -- CAS-06
-      units_of_service_adjusted_2       DECIMAL(15, 0),             -- CAS-07
+      units_of_service_adjusted_2       DECIMAL(15, 4),             -- CAS-07
       claim_adjustment_reason_code_3    VARCHAR(5),                 -- CAS-08
       adjustment_amount_3               DECIMAL(18, 2),             -- CAS-09
-      units_of_service_adjusted_3       DECIMAL(15, 0),             -- CAS-10
+      units_of_service_adjusted_3       DECIMAL(15, 4),             -- CAS-10
       claim_adjustment_reason_code_4    VARCHAR(5),                 -- CAS-11
       adjustment_amount_4               DECIMAL(18, 2),             -- CAS-12
-      units_of_service_adjusted_4       DECIMAL(15, 0),             -- CAS-13
+      units_of_service_adjusted_4       DECIMAL(15, 4),             -- CAS-13
       claim_adjustment_reason_code_5    VARCHAR(5),                 -- CAS-14
       adjustment_amount_5               DECIMAL(18, 2),             -- CAS-15
-      units_of_service_adjusted_5       DECIMAL(15, 0),             -- CAS-16
+      units_of_service_adjusted_5       DECIMAL(15, 4),             -- CAS-16
       claim_adjustment_reason_code_6    VARCHAR(5),                 -- CAS-17
       adjustment_amount_6               DECIMAL(18, 2),             -- CAS-18
-      units_of_service_adjusted_6       DECIMAL(15, 0),             -- CAS-19
+      units_of_service_adjusted_6       DECIMAL(15, 4),             -- CAS-19
 
       parent_type                       VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
       parent_id                         INTEGER NOT NULL,
@@ -492,7 +492,7 @@ export function create835Tables(): SqliteDatabaseType {
       industry_code_4                       VARCHAR(30),              -- RAS-03-06 C058-06
       industry_code_5                       VARCHAR(30),              -- RAS-03-07 C058-07
 
-      units_of_service_adjusted             DECIMAL(15, 0),           -- RAS-04
+      units_of_service_adjusted             DECIMAL(15, 4),           -- RAS-04
 
       parent_type                           VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
       parent_id                             INTEGER NOT NULL,
@@ -526,5 +526,164 @@ export function create835Tables(): SqliteDatabaseType {
     );
     `
   ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.MIA_TABLE} (
+      id                                                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                                       INTEGER NOT NULL,
+
+      covered_days                                        DECIMAL(15, 4),       -- MIA-01
+      pps_operating_outlier_amount                        DECIMAL(18, 2),       -- MIA-02
+      lifetime_psychiatric_days                           DECIMAL(15, 4),       -- MIA-03
+      drg_amount                                          DECIMAL(18, 2),       -- MIA-04
+      remittance_advice_remark_code_1                     VARCHAR(80),          -- MIA-05
+      disproportionate_share_amount                       DECIMAL(18, 2),       -- MIA-06
+      msp_pass_through_amount                             DECIMAL(18, 2),       -- MIA-07
+      pps_capital_amount                                  DECIMAL(18, 2),       -- MIA-08
+      pps_capital_federal_specific_drg                    DECIMAL(18, 2),       -- MIA-09
+      pps_capital_hospital_specific_drg                   DECIMAL(18, 2),       -- MIA-10
+      pps_capital_disproportionate_share_hospital_drg     DECIMAL(18, 2),       -- MIA-11
+      old_capital_amount                                  DECIMAL(18, 2),       -- MIA-12
+      pps_capital_indirect_medical_education_claim        DECIMAL(18, 2),       -- MIA-13
+      hospital_specific_drg_amount                        DECIMAL(18, 2),       -- MIA-14
+      cost_report_days                                    DECIMAL(15, 4),       -- MIA-15
+      federal_specific_drg_amount                         DECIMAL(18, 2),       -- MIA-16
+      pps_capital_outlier_amount                          DECIMAL(18, 2),       -- MIA-17
+      indirect_teaching_amount                            DECIMAL(18, 2),       -- MIA-18
+      professional_component_non_payable_amount_billed    DECIMAL(18, 2),       -- MIA-19
+      remittance_advice_remark_code_2                     VARCHAR(80),          -- MIA-20
+      remittance_advice_remark_code_3                     VARCHAR(80),          -- MIA-21
+      remittance_advice_remark_code_4                     VARCHAR(80),          -- MIA-22
+      remittance_advice_remark_code_5                     VARCHAR(80),          -- MIA-23
+      capital_exception_amount                            DECIMAL(18, 2),       -- MIA-24
+
+      x12_2100_id                                         INTEGER NOT NULL,
+      created_at                                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_2100_id) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+    ); 
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.MOA_TABLE} (
+      id                                          INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                               INTEGER NOT NULL,
+
+      reimbursement_rate                          DECIMAL(10, 4),     -- MOA-01
+      hcpcs_payable_amount                        DECIMAL(18, 2),     -- MOA-02
+      remittance_advice_remark_code_1             VARCHAR(80),        -- MOA-03
+      remittance_advice_remark_code_2             VARCHAR(80),        -- MOA-04
+      remittance_advice_remark_code_3             VARCHAR(80),        -- MOA-05
+      remittance_advice_remark_code_4             VARCHAR(80),        -- MOA-06
+      remittance_advice_remark_code_5             VARCHAR(80),        -- MOA-07
+      esrd_payment_amount                         DECIMAL(18, 2),     -- MOA-08
+      professional_component_non_payable_billed   DECIMAL(18,2),      -- MOA-09
+
+      x12_2100_id                 INTEGER NOT NULL,
+      created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_2100_id) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+    );
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.AMT_TABLE} (
+      id                         INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order              INTEGER NOT NULL,
+
+      amount_qualifier_code      VARCHAR(3) NOT NULL,       -- AMT-01
+      monetary_amount            DECIMAL(18, 2) NOT NULL,   -- AMT-02
+      credit_debit_flag          VARCHAR(1),                -- AMT-03
+
+      parent_type                VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
+      parent_id                  INTEGER NOT NULL,
+      created_at                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.QTY_TABLE} (
+      id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order               INTEGER NOT NULL,
+
+      quantity_qualifier          VARCHAR(2) NOT NULL,      -- QTY-01
+      quantity                    DECIMAL(15, 4),           -- QTY-02
+      units_1                     VARCHAR(2),               -- QTY-03-01 C001-01
+      exponent_1                  DECIMAL(15, 4),           -- QTY-03-02 C001-02
+      multiplier_1                DECIMAL(10, 4),           -- QTY-03-03 C001-03
+      units_2                     VARCHAR(2),               -- QTY-03-04 C001-04
+      exponent_2                  DECIMAL(15, 4),           -- QTY-03-05 C001-05
+      multiplier_2                DECIMAL(10, 4),           -- QTY-03-06 C001-06
+      units_3                     VARCHAR(2),               -- QTY-03-07 C001-07
+      exponent_3                  DECIMAL(15, 4),           -- QTY-03-08 C001-08
+      multiplier_3                DECIMAL(10, 4),           -- QTY-03-09 C001-09
+      units_4                     VARCHAR(2),               -- QTY-03-10 C001-10
+      exponent_4                  DECIMAL(15, 4),           -- QTY-03-11 C001-11
+      multiplier_4                DECIMAL(10, 4),           -- QTY-03-12 C001-12
+      units_5                     VARCHAR(2),               -- QTY-03-13 C001-13
+      exponent_5                  DECIMAL(15, 4),           -- QTY-03-14 C001-14
+      multiplier_5                DECIMAL(10, 4),           -- QTY-03-15 C001-15
+      free_form_information       VARCHAR(30),              -- QTY-04
+
+      parent_type                VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
+      parent_id                  INTEGER NOT NULL,
+      created_at                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.K3_TABLE} (
+      id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order               INTEGER NOT NULL,
+
+      fixed_format_information    VARCHAR(80) NOT NULL,     -- K3-01
+      record_format_code          VARCHAR(2),               -- K3-02
+      units_1                     VARCHAR(2),               -- K3-03-01 C001-01
+      exponent_1                  DECIMAL(15, 4),           -- K3-03-02 C001-02
+      multiplier_1                DECIMAL(10, 4),           -- K3-03-03 C001-03
+      units_2                     VARCHAR(2),               -- K3-03-04 C001-04
+      exponent_2                  DECIMAL(15, 4),           -- K3-03-05 C001-05
+      multiplier_2                DECIMAL(10, 4),           -- K3-03-06 C001-06
+      units_3                     VARCHAR(2),               -- K3-03-07 C001-07
+      exponent_3                  DECIMAL(15, 4),           -- K3-03-08 C001-08
+      multiplier_3                DECIMAL(10, 4),           -- K3-03-09 C001-09
+      units_4                     VARCHAR(2),               -- K3-03-10 C001-10
+      exponent_4                  DECIMAL(15, 4),           -- K3-03-11 C001-11
+      multiplier_4                DECIMAL(10, 4),           -- K3-03-12 C001-12
+      units_5                     VARCHAR(2),               -- K3-03-13 C001-13
+      exponent_5                  DECIMAL(15, 4),           -- K3-03-14 C001-14
+      multiplier_5                DECIMAL(10, 4),           -- K3-03-15 C001-15 
+
+
+      parent_type                VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
+      parent_id                  INTEGER NOT NULL,
+      created_at                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${constants.segmentTables.LQ_TABLE} (
+      id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order               INTEGER NOT NULL,
+
+      code_list_qualifier_code    VARCHAR(3),       -- LQ-01
+      industry_code               VARCHAR(30),      -- LQ-02
+
+      x12_2100_id                 INTEGER NOT NULL,
+      created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_2100_id) REFERENCES ${constants.compositeTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+    );
+    `
+  ).run();
+
   return db;
 }
