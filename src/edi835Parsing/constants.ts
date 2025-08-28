@@ -30,11 +30,14 @@ export const compositeTables = {
   X12_1000_TABLE: "x12_835_loop_1000",
   X12_2000_TABLE: "x12_835_loop_2000",
   X12_2100_TABLE: "x12_835_loop_2100",
+  X12_2105_TABLE: "x12_835_loop_2105",
 };
 
 export const indexNames = {
   X12_2000_PARENT_IDX: "idx_x12_835_loop_2000_x12_header_id",
   X12_1000_PARENT_IDX: "idx_x12_835_loop_1000_x12_header_id",
+  X12_2100_PARENT_IDX: "idx_x12_835_loop_2100_x12_2000_id",
+  X12_2105_PARENT_IDX: "idx_x12_835_loop_2105_x12_2100_id",
 
   ST_PARENT_IDX: "idx_x12_st_x12_header_id",
   BPR_PARENT_IDX: "idx_x12_bpr_x12_header_id",

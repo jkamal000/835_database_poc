@@ -683,6 +683,32 @@ export function create835Tables(): SqliteDatabaseType {
     `
   ).run();
 
+  // not doing on delete cascade because the dtm, ref, per, k3, qty, and amt
+  // tables need to be deleted
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${compositeTables.X12_2100_TABLE} (
+      id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order             INTEGER NOT NULL,
+      
+      x12_2000_id               INTEGER NOT NULL,
+      FOREIGN KEY (x12_2000_id) REFERENCES ${compositeTables.X12_2000_TABLE}(id)
+    );
+    `
+  ).run();
+
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${compositeTables.X12_2105_TABLE} (
+      id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order             INTEGER NOT NULL,
+      
+      x12_2100_id               INTEGER NOT NULL,
+      FOREIGN KEY (x12_2100_id) REFERENCES ${compositeTables.X12_2100_TABLE}(id)
+    );
+    `
+  ).run();
+
   createIndices(db);
   return db;
 }
@@ -821,5 +847,15 @@ function createIndices(db: SqliteDatabaseType): void {
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.LQ_PARENT_IDX} ` +
       `ON ${segmentTables.LQ_TABLE}(x12_2100_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.X12_2100_PARENT_IDX} ` +
+      `ON ${compositeTables.X12_2100_TABLE}(x12_2000_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.X12_2105_PARENT_IDX} ` +
+      `ON ${compositeTables.X12_2105_TABLE}(x12_2000_id);`
   ).run();
 }
