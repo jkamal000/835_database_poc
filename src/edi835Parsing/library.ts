@@ -495,6 +495,38 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.PLB_TABLE} (
+      id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                       INTEGER NOT NULL,
+
+      provider_number                     VARCHAR(80) NOT NULL,       -- PLB-01
+      fiscal_year_end_date                DATE NOT NULL,              -- PLB-02
+
+      -- PLB-03 is composite and in C042
+      adjustment_amount_1                 DECIMAL(18, 2) NOT NULL,    -- PLB-04
+
+      -- PLB-05 is composite and in C042
+      adjustment_amount_2                 DECIMAL(18, 2),             -- PLB-06
+
+      -- PLB-07 is composite and in C042 
+      adjustment_amount_3                 DECIMAL(18, 2),             -- PLB-08
+
+      -- PLB-09 is composite and in C042 
+      adjustment_amount_4                 DECIMAL(18, 2),             -- PLB-10
+
+      -- PLB-11 is composite and in C042 
+      adjustment_amount_5                 DECIMAL(18, 2),             -- PLB-12
+
+      -- PLB-13 is composite and in C042 
+      adjustment_amount_6                 DECIMAL(18, 2),             -- PLB-14
+
+      x12_header_id             INTEGER NOT NULL,
+      created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_header_id) REFERENCES ${loopTables.HEADER_TABLE}(id) ON DELETE CASCADE
+    );`
+  ).run();
+
+  db.prepare(
     `
     CREATE TABLE IF NOT EXISTS ${segmentTables.QTY_TABLE} (
       id                          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -565,6 +597,20 @@ export function create835Tables(): SqliteDatabaseType {
       parent_type           VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
       parent_id             INTEGER NOT NULL,
       created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`
+  ).run();
+
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.SE_TABLE} (
+      id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order             INTEGER NOT NULL,
+
+      number_segments_in_transaction    DECIMAL(10, 0) NOT NULL,
+      unique_control_number             VARCHAR(9) NOT NULL,
+
+      x12_header_id             INTEGER NOT NULL,
+      created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_header_id) REFERENCES ${loopTables.HEADER_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
@@ -820,6 +866,20 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${compositeTables.C042_TABLE} (
+      id                                INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                     INTEGER NOT NULL,
+
+      credit_debit_adjustment_reason    VARCHAR(30) NOT NULL,     -- C042-01
+      reference_id                      VARCHAR(80),              -- C042-02
+
+      x12_plb_id                        INTEGER NOT NULL,
+      created_at                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_plb_id) REFERENCES ${segmentTables.PLB_TABLE}(id) ON DELETE CASCADE
+    );`
+  ).run();
+
+  db.prepare(
     `
     CREATE TABLE IF NOT EXISTS ${compositeTables.C058_TABLE} (
       id                                    INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -933,6 +993,11 @@ function createIndices(db: SqliteDatabaseType): void {
   ).run();
 
   db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.PLB_PARENT_IDX} ` +
+      `ON ${segmentTables.PLB_TABLE}(x12_header_id);`
+  ).run();
+
+  db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.QTY_PARENT_IDX} ` +
       `ON ${segmentTables.QTY_TABLE}(parent_type, parent_id);`
   ).run();
@@ -950,6 +1015,11 @@ function createIndices(db: SqliteDatabaseType): void {
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.REF_PARENT_IDX} ` +
       `ON ${segmentTables.REF_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.SE_PARENT_IDX} ` +
+      `ON ${segmentTables.SE_TABLE}(x12_header_id);`
   ).run();
 
   db.prepare(
@@ -1033,6 +1103,11 @@ function createIndices(db: SqliteDatabaseType): void {
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.C040_PARENT_IDX} ` +
       `ON ${compositeTables.C040_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.C042_PARENT_IDX} ` +
+      `ON ${compositeTables.C042_TABLE}(x12_plb_id);`
   ).run();
 
   db.prepare(
