@@ -80,6 +80,18 @@ export function create835Tables(): SqliteDatabaseType {
     `
   ).run();
 
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${loopTables.X12_2110_TABLE} (
+      id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order             INTEGER NOT NULL,
+      
+      x12_2100_id               INTEGER NOT NULL,
+      FOREIGN KEY (x12_2100_id) REFERENCES ${loopTables.X12_2100_TABLE}(id)
+    );
+    `
+  ).run();
+
   // ------------------------- SEGMENT TABLES -------------------------
   db.prepare(
     `
@@ -283,9 +295,9 @@ export function create835Tables(): SqliteDatabaseType {
       code_list_qualifier_code    VARCHAR(3),       -- LQ-01
       industry_code               VARCHAR(30),      -- LQ-02
 
-      x12_2100_id                 INTEGER NOT NULL,
-      created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_2100_id) REFERENCES ${loopTables.X12_2100_TABLE}(id) ON DELETE CASCADE
+      parent_type                VARCHAR(50) NOT NULL,   -- e.g., 'x12_n1', 'clp_x12'
+      parent_id                  INTEGER NOT NULL,
+      created_at                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     `
   ).run();
@@ -571,35 +583,44 @@ export function create835Tables(): SqliteDatabaseType {
     );`
   ).run();
 
-  // TODO: finish. not fully complete
-  // db.prepare(
-  //   `
-  //   CREATE TABLE IF NOT EXISTS ${segmentTables.SVC_TABLE} (
-  //     id                                                  INTEGER PRIMARY KEY AUTOINCREMENT,
-  //     segment_order                                       INTEGER NOT NULL,
+  db.prepare(
+    `
+    CREATE TABLE IF NOT EXISTS ${segmentTables.SVC_TABLE} (
+      id                                                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                                       INTEGER NOT NULL,
 
-  //     product_service_id_qualifier                        VARCHAR(2) NOT NULL,
-  //     product_service_id                                  VARCHAR(80) NOT NULL,
-  //     procedure_modifier_1                                VARCHAR(2),
-  //     procedure_modifier_2                                VARCHAR(2),
-  //     procedure_modifier_3                                VARCHAR(2),
-  //     procedure_modifier_4                                VARCHAR(2),
-  //     procedure_description                               VARCHAR(80),
-  //     ending_product_service_id                           VARCHAR(80),
-  //     ending_procedure_modifier_1                         VARCHAR(2),
-  //     ending_procedure_modifier_2                         VARCHAR(2),
-  //     ending_procedure_modifier_3                         VARCHAR(2),
-  //     ending_procedure_modifier_4                         VARCHAR(2),
-  //     submitted_service_charge                            DECIMAL(18, 2),
-  //     amount_paid                                         DECIMAL(18, 2),
-  //     national_uniform_billing_committee_revenue_code     VARCHAR(80),
-  //     paid_units_of_service                               DECIMAL(15, 4),
+      -- SVC-01 is composite and is in C003
 
-  //     x12_2100_id                           INTEGER NOT NULL,
-  //     FOREIGN KEY (x12_2100_id) REFERENCES ${loopTables.X12_2100_TABLE}(id)
-  //   );
-  //   `
-  // );
+      submitted_service_charge                            DECIMAL(18, 2),   -- SVC-02
+      amount_paid                                         DECIMAL(18, 2),   -- SVC-03
+      national_uniform_billing_committee_revenue_code     VARCHAR(80),      -- SVC-04
+      paid_units_of_service                               DECIMAL(15, 4),   -- SVC-05
+
+      -- SVC-06 is composite and is in C003
+
+      original_submitted_units_of_service                 DECIMAL(15, 4),   -- SVC-07
+
+      x12_2110_id                           INTEGER NOT NULL,
+      FOREIGN KEY (x12_2110_id) REFERENCES ${loopTables.X12_2110_TABLE}(id)
+    );
+    `
+  );
+
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${segmentTables.TOO_TABLE} (
+      id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order             INTEGER NOT NULL,
+
+      code_list_qualifier_code  VARCHAR(3),
+      industry_code             VARCHAR(30),
+
+      -- TOO-03 is composite and in C005      
+
+      x12_2110_id               INTEGER NOT NULL,
+      created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_2110_id) REFERENCES ${loopTables.X12_2110_TABLE}(id) ON DELETE CASCADE
+    );`
+  );
 
   db.prepare(
     `CREATE TABLE IF NOT EXISTS ${segmentTables.TRN_TABLE} (
@@ -622,25 +643,25 @@ export function create835Tables(): SqliteDatabaseType {
       id                                                    INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                                         INTEGER NOT NULL,
 
-      total_drg_amount                                      DECIMAL(18, 2),   --TS2-01
-      total_federal_specific_amount                         DECIMAL(18, 2),   --TS2-02
-      total_hospital_specific_amount                        DECIMAL(18, 2),   --TS2-03
-      total_disproportionate_share_amount                   DECIMAL(18, 2),   --TS2-04
-      total_capital_amount                                  DECIMAL(18, 2),   --TS2-05
-      total_medical_education_amount                        DECIMAL(18, 2),   --TS2-06
-      total_number_of_outlier_days                          DECIMAL(15, 4),   --TS2-07
-      total_outlier_amount                                  DECIMAL(18, 2),   --TS2-08
-      total_cost_outlier_amount                             DECIMAL(18, 2),   --TS2-09
-      drg_average_length_of_stay                            DECIMAL(15, 4),   --TS2-10
-      total_number_of_discharges                            DECIMAL(15, 4),   --TS2-11
-      total_number_of_cost_report_days                      DECIMAL(15, 4),   --TS2-12
-      total_number_of_covered_days                          DECIMAL(15, 4),   --TS2-13
-      total_number_of_noncovered_days                       DECIMAL(15, 4),   --TS2-14
-      total_msp_pass_through_for_non_medicare               DECIMAL(18, 2),   --TS2-15
-      average_drg_weight                                    DECIMAL(15, 4),   --TS2-16
-      total_pps_capital_federal_specific_drg_amount         DECIMAL(18, 2),   --TS2-17
-      total_pps_capital_hospital_specific_drg_amount        DECIMAL(18, 2),   --TS2-18
-      total_pps_disproportionate_share_hospital_drg_amount  DECIMAL(18, 2),   --TS2-19
+      total_drg_amount                                      DECIMAL(18, 2),   -- TS2-01
+      total_federal_specific_amount                         DECIMAL(18, 2),   -- TS2-02
+      total_hospital_specific_amount                        DECIMAL(18, 2),   -- TS2-03
+      total_disproportionate_share_amount                   DECIMAL(18, 2),   -- TS2-04
+      total_capital_amount                                  DECIMAL(18, 2),   -- TS2-05
+      total_medical_education_amount                        DECIMAL(18, 2),   -- TS2-06
+      total_number_of_outlier_days                          DECIMAL(15, 4),   -- TS2-07
+      total_outlier_amount                                  DECIMAL(18, 2),   -- TS2-08
+      total_cost_outlier_amount                             DECIMAL(18, 2),   -- TS2-09
+      drg_average_length_of_stay                            DECIMAL(15, 4),   -- TS2-10
+      total_number_of_discharges                            DECIMAL(15, 4),   -- TS2-11
+      total_number_of_cost_report_days                      DECIMAL(15, 4),   -- TS2-12
+      total_number_of_covered_days                          DECIMAL(15, 4),   -- TS2-13
+      total_number_of_noncovered_days                       DECIMAL(15, 4),   -- TS2-14
+      total_msp_pass_through_for_non_medicare               DECIMAL(18, 2),   -- TS2-15
+      average_drg_weight                                    DECIMAL(15, 4),   -- TS2-16
+      total_pps_capital_federal_specific_drg_amount         DECIMAL(18, 2),   -- TS2-17
+      total_pps_capital_hospital_specific_drg_amount        DECIMAL(18, 2),   -- TS2-18
+      total_pps_disproportionate_share_hospital_drg_amount  DECIMAL(18, 2),   -- TS2-19
 
 
       x12_2000_id                                           INTEGER NOT NULL,
@@ -718,6 +739,47 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${compositeTables.C003_TABLE} (
+      id                              INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                   INTEGER NOT NULL,
+
+      product_service_id_qualifier    VARCHAR(2) NOT NULL,    -- C003-01
+      product_service_id              VARCHAR(80) NOT NULL,   -- C003-02
+      procedure_modifier_1            VARCHAR(2),             -- C003-03
+      procedure_modifier_2            VARCHAR(2),             -- C003-04
+      procedure_modifier_3            VARCHAR(2),             -- C003-05
+      procedure_modifier_4            VARCHAR(2),             -- C003-06
+      procedure_description           VARCHAR(80),            -- C003-07
+      ending_product_service_id       VARCHAR(80),            -- C003-08
+      ending_procedure_modifier_1     VARCHAR(2),             -- C003-09
+      ending_procedure_modifier_2     VARCHAR(2),             -- C003-10
+      ending_procedure_modifier_3     VARCHAR(2),             -- C003-11
+      ending_procedure_modifier_4     VARCHAR(2),             -- C003-12
+
+      x12_svc_id                      INTEGER NOT NULL,
+      created_at                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_svc_id) REFERENCES ${segmentTables.SVC_TABLE}(id) ON DELETE CASCADE
+    );`
+  ).run();
+
+  db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${compositeTables.C005_TABLE} (
+      id                              INTEGER PRIMARY KEY AUTOINCREMENT,
+      segment_order                   INTEGER NOT NULL,
+
+      tooth_surface_code_1            VARCHAR(2) NOT NULL,    -- TOO-01
+      tooth_surface_code_2            VARCHAR(2) NOT NULL,    -- TOO-02
+      tooth_surface_code_3            VARCHAR(2) NOT NULL,    -- TOO-03
+      tooth_surface_code_4            VARCHAR(2) NOT NULL,    -- TOO-04
+      tooth_surface_code_5            VARCHAR(2) NOT NULL,    -- TOO-05
+
+      x12_too_id                      INTEGER NOT NULL,
+      created_at                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (x12_too_id) REFERENCES ${segmentTables.TOO_TABLE}(id) ON DELETE CASCADE
+    );`
+  ).run();
+
+  db.prepare(
     `CREATE TABLE IF NOT EXISTS ${compositeTables.C022_TABLE} (
       id                                              INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                                   INTEGER NOT NULL,
@@ -735,7 +797,7 @@ export function create835Tables(): SqliteDatabaseType {
 
       x12_clp_id                                      INTEGER NOT NULL,
       created_at                                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_clp_id) REFERENCES ${segmentTables.CLP_TABLE}(id) ON DELETE (CASCADE)
+      FOREIGN KEY (x12_clp_id) REFERENCES ${segmentTables.CLP_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
@@ -752,7 +814,7 @@ export function create835Tables(): SqliteDatabaseType {
       id_4                  VARCHAR(80),            -- C040-06
 
       parent_type           VARCHAR(50),
-      parent_id             INTEGER NOT NULL
+      parent_id             INTEGER NOT NULL,
       created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`
   ).run();
@@ -822,7 +884,7 @@ function createIndices(db: SqliteDatabaseType): void {
 
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.LQ_PARENT_IDX} ` +
-      `ON ${segmentTables.LQ_TABLE}(x12_2100_id);`
+      `ON ${segmentTables.LQ_TABLE}(parent_type, parent_id);`
   ).run();
 
   db.prepare(
@@ -896,6 +958,16 @@ function createIndices(db: SqliteDatabaseType): void {
   ).run();
 
   db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.SVC_PARENT_IDX} ` +
+      `ON ${segmentTables.SVC_TABLE}(x12_2110_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.TOO_PARENT_IDX} ` +
+      `ON ${segmentTables.TOO_TABLE}(x12_2110_id);`
+  ).run();
+
+  db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.TRN_PARENT_IDX} ` +
       `ON ${segmentTables.TRN_TABLE}(x12_header_id);`
   ).run();
@@ -928,7 +1000,12 @@ function createIndices(db: SqliteDatabaseType): void {
 
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.X12_2105_PARENT_IDX} ` +
-      `ON ${loopTables.X12_2105_TABLE}(x12_2000_id);`
+      `ON ${loopTables.X12_2105_TABLE}(x12_2100_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.X12_2110_PARENT_IDX} ` +
+      `ON ${loopTables.X12_2110_TABLE}(x12_2100_id);`
   ).run();
 
   // ----------------------- composite table indices
@@ -936,6 +1013,16 @@ function createIndices(db: SqliteDatabaseType): void {
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.C001_PARENT_IDX} ` +
       `ON ${compositeTables.C001_TABLE}(parent_type, parent_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.C003_PARENT_IDX} ` +
+      `ON ${compositeTables.C003_TABLE}(x12_svc_id);`
+  ).run();
+
+  db.prepare(
+    `CREATE INDEX IF NOT EXISTS ${indexNames.C005_PARENT_IDX} ` +
+      `ON ${compositeTables.C005_TABLE}(x12_too_id);`
   ).run();
 
   db.prepare(
