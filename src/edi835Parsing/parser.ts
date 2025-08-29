@@ -1,6 +1,14 @@
 import { X12parser } from "x12-parser";
 import { Readable } from "node:stream";
-import { create835Tables } from "./library";
+import {
+  create835Tables,
+  insertBPR,
+  insertCUR,
+  insertHeader,
+  insertNTE,
+  insertST,
+  insertTRN,
+} from "./library";
 import type { Database as SqliteDatabaseType } from "better-sqlite3";
 
 export interface SegmentInfo {
@@ -15,6 +23,15 @@ interface StateInfo {
   loop2100Idx?: number;
   loop2105Idx?: number;
   loop2110Idx?: number;
+  headerId?: number | bigint;
+  loop1000Id?: number | bigint;
+  loop2000Id?: number | bigint;
+  loop2100Id?: number | bigint;
+  loop2105Id?: number | bigint;
+  loop2110Id?: number | bigint;
+
+  prevSegmentName?: string;
+  currentSegmentOrder: number;
 }
 
 enum State {
@@ -28,11 +45,14 @@ enum State {
 }
 
 export async function parseX12(readStream: Readable): Promise<void> {
-  create835Tables();
+  const db = create835Tables();
   const parser = new X12parser();
 
   try {
-    let currentState: StateInfo = { state: State.heading };
+    let currentState: StateInfo = {
+      state: State.heading,
+      currentSegmentOrder: 0,
+    };
 
     const ediStream = readStream.pipe(parser);
     printStateInfo(currentState);
@@ -41,11 +61,27 @@ export async function parseX12(readStream: Readable): Promise<void> {
 
       const output = changeState(currentState, data);
       if (output !== null) {
+        // starting a new saved previous segment and order can be cleared.
+        output.prevSegmentName = undefined;
+        output.currentSegmentOrder = 0;
         currentState = output;
-
         printStateInfo(currentState);
       }
+
+      if (data.name == currentState.prevSegmentName) {
+        // if the current segment is the same as the last we need to increment
+        // the segment order
+        currentState.currentSegmentOrder = currentState.currentSegmentOrder + 1;
+      } else {
+        currentState.currentSegmentOrder = 0;
+      }
       console.log(data.name);
+      switch (currentState.state) {
+        case State.heading:
+          decodeHeading(db, data, currentState);
+          break;
+      }
+      currentState.prevSegmentName = data.name;
     }
 
     console.log("Successfully finished processing the file.");
@@ -54,7 +90,31 @@ export async function parseX12(readStream: Readable): Promise<void> {
   }
 }
 
-export function decodeHeading(db: SqliteDatabaseType, data: SegmentInfo) {}
+export function decodeHeading(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+) {
+  console.log(data);
+  switch (data.name) {
+    case "ST":
+      stateInfo.headerId = insertHeader(db);
+      insertST(db, data, stateInfo.headerId);
+      break;
+    case "BPR":
+      insertBPR(db, data, stateInfo.headerId!);
+      break;
+    case "NTE":
+      insertNTE(db, data, stateInfo.headerId!, stateInfo.currentSegmentOrder);
+      break;
+    case "TRN":
+      insertTRN(db, data, stateInfo.headerId!);
+      break;
+    case "CUR":
+      insertCUR(db, data, stateInfo.headerId!);
+      break;
+  }
+}
 
 export function decode2000(info: { name: string; data: SegmentInfo[] }) {}
 
