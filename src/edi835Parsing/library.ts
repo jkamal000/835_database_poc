@@ -31,6 +31,13 @@ export function create835Tables(): SqliteDatabaseType {
   ).run();
 
   db.prepare(
+    `CREATE TABLE IF NOT EXISTS ${loopTables.SUMMARY_TABLE} (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`
+  ).run();
+
+  db.prepare(
     `CREATE TABLE IF NOT EXISTS ${loopTables.X12_1000_TABLE} (
       id                                  INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order                       INTEGER NOT NULL,
@@ -520,9 +527,9 @@ export function create835Tables(): SqliteDatabaseType {
       -- PLB-13 is composite and in C042 
       adjustment_amount_6                 DECIMAL(18, 2),             -- PLB-14
 
-      x12_header_id             INTEGER NOT NULL,
+      x12_summary_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${loopTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_summary_id) REFERENCES ${loopTables.SUMMARY_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
@@ -608,9 +615,9 @@ export function create835Tables(): SqliteDatabaseType {
       number_segments_in_transaction    DECIMAL(10, 0) NOT NULL,    -- SE-01
       unique_control_number             VARCHAR(9) NOT NULL,        -- SE-02
 
-      x12_header_id             INTEGER NOT NULL,
+      x12_summary_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (x12_header_id) REFERENCES ${loopTables.HEADER_TABLE}(id) ON DELETE CASCADE
+      FOREIGN KEY (x12_summary_id) REFERENCES ${loopTables.SUMMARY_TABLE}(id) ON DELETE CASCADE
     );`
   ).run();
 
@@ -994,7 +1001,7 @@ function createIndices(db: SqliteDatabaseType): void {
 
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.PLB_PARENT_IDX} ` +
-      `ON ${segmentTables.PLB_TABLE}(x12_header_id);`
+      `ON ${segmentTables.PLB_TABLE}(x12_summary_id);`
   ).run();
 
   db.prepare(
@@ -1019,7 +1026,7 @@ function createIndices(db: SqliteDatabaseType): void {
 
   db.prepare(
     `CREATE INDEX IF NOT EXISTS ${indexNames.SE_PARENT_IDX} ` +
-      `ON ${segmentTables.SE_TABLE}(x12_header_id);`
+      `ON ${segmentTables.SE_TABLE}(x12_summary_id);`
   ).run();
 
   db.prepare(

@@ -31,6 +31,7 @@ export const segmentTables = {
 };
 export const loopTables = {
   HEADER_TABLE: "x12_835_header",
+  SUMMARY_TABLE: "x12_835_summary",
   X12_1000_TABLE: "x12_835_loop_1000",
   X12_2000_TABLE: "x12_835_loop_2000",
   X12_2100_TABLE: "x12_835_loop_2100",
@@ -72,12 +73,12 @@ export const indexNames = {
   NM1_PARENT_IDX: "idx_x12_nm1_parent_type_id",
   NTE_PARENT_IDX: "idx_x12_nte_x12_header_id",
   PER_PARENT_IDX: "idx_x12_per_parent_type_id",
-  PLB_PARENT_IDX: "idx_x12_plb_x12_header_id",
+  PLB_PARENT_IDX: "idx_x12_plb_x12_summary_id",
   QTY_PARENT_IDX: "idx_x12_qty_parent_type_id",
   RAS_PARENT_IDX: "idx_x12_ras_parent_type_id",
   RDM_PARENT_IDX: "idx_x12_rdm_x12_1000_id",
   REF_PARENT_IDX: "idx_x12_ref_parent_type_id",
-  SE_PARENT_IDX: "idx_x12_se_x12_header_id",
+  SE_PARENT_IDX: "idx_x12_se_x12_summary_id",
   ST_PARENT_IDX: "idx_x12_st_x12_header_id",
   SVC_PARENT_IDX: "idx_x12_svc_x12_2110_id",
   TOO_PARENT_IDX: "idx_x12_too_x12_2110_id",
