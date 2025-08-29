@@ -604,7 +604,7 @@ export function create835Tables(): SqliteDatabaseType {
       FOREIGN KEY (x12_2110_id) REFERENCES ${loopTables.X12_2110_TABLE}(id)
     );
     `
-  );
+  ).run();
 
   db.prepare(
     `CREATE TABLE IF NOT EXISTS ${segmentTables.TOO_TABLE} (
@@ -620,7 +620,7 @@ export function create835Tables(): SqliteDatabaseType {
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (x12_2110_id) REFERENCES ${loopTables.X12_2110_TABLE}(id) ON DELETE CASCADE
     );`
-  );
+  ).run();
 
   db.prepare(
     `CREATE TABLE IF NOT EXISTS ${segmentTables.TRN_TABLE} (
