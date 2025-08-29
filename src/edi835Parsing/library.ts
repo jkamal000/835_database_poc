@@ -605,8 +605,8 @@ export function create835Tables(): SqliteDatabaseType {
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
-      number_segments_in_transaction    DECIMAL(10, 0) NOT NULL,
-      unique_control_number             VARCHAR(9) NOT NULL,
+      number_segments_in_transaction    DECIMAL(10, 0) NOT NULL,    -- SE-01
+      unique_control_number             VARCHAR(9) NOT NULL,        -- SE-02
 
       x12_header_id             INTEGER NOT NULL,
       created_at                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
