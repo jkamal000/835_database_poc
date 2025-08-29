@@ -54,41 +54,6 @@ export async function parseX12(readStream: Readable): Promise<void> {
   }
 }
 
-function printStateInfo(stateInfo: StateInfo) {
-  let name: string;
-  let idx: number;
-  switch (stateInfo.state) {
-    case State.heading:
-      name = "heading";
-      idx = 0;
-      break;
-    case State.loop1000:
-      name = "loop 1000";
-      idx = stateInfo.loop1000Idx!;
-      break;
-    case State.loop2000:
-      name = "loop 2000";
-      idx = stateInfo.loop2000Idx!;
-      break;
-    case State.loop2100:
-      name = "loop 2100";
-      idx = stateInfo.loop2100Idx!;
-      break;
-    case State.loop2105:
-      name = "loop 2105";
-      idx = stateInfo.loop2105Idx!;
-      break;
-    case State.loop2110:
-      name = "loop 2110";
-      idx = stateInfo.loop2110Idx!;
-      break;
-    case State.summary:
-      name = "summary";
-      idx = 0;
-  }
-  console.log(`=============== ${name} ${idx}`);
-}
-
 export function decodeHeading(db: SqliteDatabaseType, data: SegmentInfo) {}
 
 export function decode2000(info: { name: string; data: SegmentInfo[] }) {}
@@ -161,4 +126,39 @@ function changeState(
   }
 
   return null;
+}
+
+function printStateInfo(stateInfo: StateInfo) {
+  let name: string;
+  let idx: number;
+  switch (stateInfo.state) {
+    case State.heading:
+      name = "heading";
+      idx = 0;
+      break;
+    case State.loop1000:
+      name = "loop 1000";
+      idx = stateInfo.loop1000Idx!;
+      break;
+    case State.loop2000:
+      name = "loop 2000";
+      idx = stateInfo.loop2000Idx!;
+      break;
+    case State.loop2100:
+      name = "loop 2100";
+      idx = stateInfo.loop2100Idx!;
+      break;
+    case State.loop2105:
+      name = "loop 2105";
+      idx = stateInfo.loop2105Idx!;
+      break;
+    case State.loop2110:
+      name = "loop 2110";
+      idx = stateInfo.loop2110Idx!;
+      break;
+    case State.summary:
+      name = "summary";
+      idx = 0;
+  }
+  console.log(`=============== ${name} ${idx}`);
 }
