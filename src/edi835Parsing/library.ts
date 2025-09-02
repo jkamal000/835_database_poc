@@ -1287,6 +1287,15 @@ export function insertNTE(
   return insertRow(db, segmentTables.NTE_TABLE, mapped);
 }
 
+export function insertREF(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentId: number | bigint,
+  parentType: string
+): number | bigint {
+  return 0;
+}
+
 export function insertST(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -1319,6 +1328,32 @@ export function insertTRN(
 
   return insertRow(db, segmentTables.TRN_TABLE, mapped);
 }
+
+// -------------------------------- composite tables --------------------------
+export function insertC040(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  order: number,
+  parentId: number | bigint,
+  parentType: string
+) {
+  const map: Record<string, string> = {
+    "1": "id_qualifier_2",
+    "2": "id_2",
+    "3": "id_qualifier_3",
+    "4": "id_3",
+    "5": "id_qualifier_4",
+    "6": "id_4",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  return insertRow(db, compositeTables.C040_TABLE, mapped);
+}
+
+// ----------------------- helper methods -------------------------------------
 
 function mapValues(
   data: SegmentInfo,

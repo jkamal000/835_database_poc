@@ -113,6 +113,16 @@ export function decodeHeading(
     case "CUR":
       insertCUR(db, data, stateInfo.headerId!);
       break;
+    case "REF":
+      break;
+    case "PER":
+      break;
+    case "RDM":
+      break;
+    case "DTM":
+      break;
+    default:
+      return;
   }
 }
 
