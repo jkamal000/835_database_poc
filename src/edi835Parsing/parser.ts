@@ -2,7 +2,11 @@ import { X12parser } from "x12-parser";
 import { Readable } from "node:stream";
 import {
   insert1000,
+  insert2000,
+  insert2100,
   insertBPR,
+  insertCAS,
+  insertCLP,
   insertCUR,
   insertDTM,
   insertHeader,
@@ -16,44 +20,15 @@ import {
   insertREF,
   insertST,
   insertTRN,
+  insertTS2,
+  insertTS3,
 } from "./library";
 import type { Database as SqliteDatabaseType } from "better-sqlite3";
 import { create835Tables } from "./createTables";
 import { loopTables } from "./constants";
-
-export interface SegmentInfo {
-  name: string;
-  [key: string]: string;
-}
-
-interface StateInfo {
-  state: State;
-  loop1000Idx?: number;
-  loop2000Idx?: number;
-  loop2100Idx?: number;
-  loop2105Idx?: number;
-  loop2110Idx?: number;
-  headerId?: number | bigint;
-  loop1000Id?: number | bigint;
-  loop2000Id?: number | bigint;
-  loop2100Id?: number | bigint;
-  loop2105Id?: number | bigint;
-  loop2110Id?: number | bigint;
-  n1Id?: number | bigint;
-
-  prevSegmentName?: string;
-  currentSegmentOrder: number;
-}
-
-enum State {
-  heading,
-  loop1000,
-  loop2000,
-  loop2100,
-  loop2105,
-  loop2110,
-  summary,
-}
+import { SegmentInfo } from "./interfaces/segmentInfo";
+import { StateInfo, State } from "./interfaces/stateInfo";
+import { reparseSegment } from "./parserHelper";
 
 export async function parseX12(readStream: Readable): Promise<void> {
   const db = create835Tables();
@@ -62,6 +37,8 @@ export async function parseX12(readStream: Readable): Promise<void> {
   try {
     let currentState: StateInfo = {
       state: State.heading,
+      repeatingElementSeparator: "^", // this is the commonly used value but it will be updated
+      compositeElementSeparator: ":", // this is the commonly used value but it will be updated
       currentSegmentOrder: 0,
     };
 
@@ -87,13 +64,19 @@ export async function parseX12(readStream: Readable): Promise<void> {
       } else {
         currentState.currentSegmentOrder = 0;
       }
-      console.log(data.name);
+      console.log(data.name, currentState.currentSegmentOrder);
       switch (currentState.state) {
         case State.heading:
           decodeHeading(db, data, currentState);
           break;
         case State.loop1000:
           decode1000(db, data, currentState);
+          break;
+        case State.loop2000:
+          decode2000(db, data, currentState);
+          break;
+        case State.loop2100:
+          decode2100(db, data, currentState);
           break;
       }
       currentState.prevSegmentName = data.name;
@@ -111,6 +94,11 @@ export function decodeHeading(
   stateInfo: StateInfo
 ): void {
   switch (data.name) {
+    case "ISA":
+      // setting up delimiters:
+      stateInfo.repeatingElementSeparator = data["11"];
+      stateInfo.compositeElementSeparator = data["16"];
+      break;
     case "ST":
       stateInfo.headerId = insertHeader(db);
       insertST(db, data, stateInfo.headerId);
@@ -205,7 +193,67 @@ export function decode1000(
   }
 }
 
-export function decode2000(info: { name: string; data: SegmentInfo[] }) {}
+export function decode2000(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+): void {
+  switch (data.name) {
+    case "LX":
+      stateInfo.loop2000Id = insert2000(
+        db,
+        stateInfo.loop2000Idx!,
+        stateInfo.headerId!
+      );
+      break;
+    case "TS3":
+      insertTS3(db, data, stateInfo.loop2000Id!);
+      break;
+    case "TS2":
+      insertTS2(db, data, stateInfo.loop2000Id!);
+      break;
+    default:
+      return;
+  }
+}
+
+export function decode2100(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+): void {
+  let newData: SegmentInfo;
+  switch (data.name) {
+    case "CLP":
+      stateInfo.loop2100Id = insert2100(
+        db,
+        stateInfo.loop2100Idx!,
+        stateInfo.loop2000Id!
+      );
+      insertCLP(db, data, stateInfo.loop2100Id);
+      break;
+    case "CAS":
+      insertCAS(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "RAS":
+      console.log(data);
+      newData = reparseSegment(
+        data,
+        stateInfo.compositeElementSeparator,
+        stateInfo.repeatingElementSeparator
+      );
+      console.log(newData);
+      break;
+    default:
+      return;
+  }
+}
 
 function changeState(
   stateInfo: StateInfo,
