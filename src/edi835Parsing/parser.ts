@@ -1,10 +1,18 @@
 import { X12parser } from "x12-parser";
 import { Readable } from "node:stream";
 import {
+  insert1000,
   insertBPR,
   insertCUR,
+  insertDTM,
   insertHeader,
+  insertN1,
+  insertN2,
+  insertN3,
+  insertN4,
   insertNTE,
+  insertPER,
+  insertRDM,
   insertREF,
   insertST,
   insertTRN,
@@ -31,6 +39,7 @@ interface StateInfo {
   loop2100Id?: number | bigint;
   loop2105Id?: number | bigint;
   loop2110Id?: number | bigint;
+  n1Id?: number | bigint;
 
   prevSegmentName?: string;
   currentSegmentOrder: number;
@@ -66,6 +75,7 @@ export async function parseX12(readStream: Readable): Promise<void> {
         // starting a new saved previous segment and order can be cleared.
         output.prevSegmentName = undefined;
         output.currentSegmentOrder = 0;
+        output.n1Id = undefined;
         currentState = output;
         printStateInfo(currentState);
       }
@@ -82,6 +92,9 @@ export async function parseX12(readStream: Readable): Promise<void> {
         case State.heading:
           decodeHeading(db, data, currentState);
           break;
+        case State.loop1000:
+          decode1000(db, data, currentState);
+          break;
       }
       currentState.prevSegmentName = data.name;
     }
@@ -96,8 +109,7 @@ export function decodeHeading(
   db: SqliteDatabaseType,
   data: SegmentInfo,
   stateInfo: StateInfo
-) {
-  console.log(data);
+): void {
   switch (data.name) {
     case "ST":
       stateInfo.headerId = insertHeader(db);
@@ -119,19 +131,77 @@ export function decodeHeading(
       insertREF(
         db,
         data,
-        stateInfo.currentSegmentOrder,
+        loopTables.HEADER_TABLE,
         stateInfo.headerId!,
-        loopTables.HEADER_TABLE
+        stateInfo.currentSegmentOrder
       );
       break;
-    case "PER":
-      break;
-    case "RDM":
-      break;
     case "DTM":
+      insertDTM(
+        db,
+        data,
+        loopTables.HEADER_TABLE,
+        stateInfo.headerId!,
+        stateInfo.currentSegmentOrder
+      );
       break;
     default:
       return;
+  }
+}
+
+export function decode1000(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+): void {
+  switch (data.name) {
+    case "N1":
+      stateInfo.loop1000Id = insert1000(
+        db,
+        stateInfo.loop1000Idx!,
+        stateInfo.headerId!
+      );
+      stateInfo.n1Id = insertN1(
+        db,
+        data,
+        loopTables.X12_1000_TABLE,
+        stateInfo.loop1000Id
+      );
+      break;
+    case "N2":
+      insertN2(db, data, stateInfo.n1Id!, stateInfo.currentSegmentOrder);
+      break;
+    case "N3":
+      insertN3(db, data, stateInfo.n1Id!, stateInfo.currentSegmentOrder);
+      break;
+    case "N4":
+      insertN4(db, data, stateInfo.n1Id!, stateInfo.currentSegmentOrder);
+      break;
+    case "REF":
+      insertREF(
+        db,
+        data,
+        loopTables.X12_1000_TABLE,
+        stateInfo.loop1000Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "PER":
+      insertPER(
+        db,
+        data,
+        loopTables.X12_1000_TABLE,
+        stateInfo.loop1000Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "RDM":
+      insertRDM(db, data, stateInfo.loop1000Id!);
+      break;
+    case "DTM":
+      insertDTM(db, data, loopTables.X12_1000_TABLE, stateInfo.loop1000Id!, 0);
+      break;
   }
 }
 

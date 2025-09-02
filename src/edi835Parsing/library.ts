@@ -186,6 +186,85 @@ export function insertDTM(
   return insertRow(db, segmentTables.DTM_TABLE, mapped);
 }
 
+export function insertN1(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "entity_identifier",
+    "2": "entity_name",
+    "3": "id_code_qualifier",
+    "4": "identification_code",
+    "5": "entity_relationship_code",
+    "6": "related_entity_identifier_code",
+  };
+
+  const mapped = mapValues(data, map, 0);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  return insertRow(db, segmentTables.N1_TABLE, mapped);
+}
+
+export function insertN2(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  n1Id: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "additional_name_1",
+    "2": "additional_name_2",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["x12_n1_id"] = n1Id;
+
+  return insertRow(db, segmentTables.N2_TABLE, mapped);
+}
+
+export function insertN3(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  n1Id: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "address_information_1",
+    "2": "address_information_2",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["x12_n1_id"] = n1Id;
+
+  return insertRow(db, segmentTables.N3_TABLE, mapped);
+}
+
+export function insertN4(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  n1Id: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "city_name",
+    "2": "state_or_province_code",
+    "3": "postal_code",
+    "4": "country_code",
+    "5": "location_qualifier",
+    "6": "location_id",
+    "7": "country_subdivision_code",
+    "8": "postal_code_formatted",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["x12_n1_id"] = n1Id;
+
+  return insertRow(db, segmentTables.N4_TABLE, mapped);
+}
+
 export function insertNTE(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -200,6 +279,82 @@ export function insertNTE(
   const mapped = mapValues(data, map, order);
   mapped["x12_header_id"] = headerId;
   return insertRow(db, segmentTables.NTE_TABLE, mapped);
+}
+
+export function insertPER(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "contact_function_code",
+    "2": "name",
+    "3": "communication_number_qualifier_1",
+    "4": "communication_number_1",
+    "5": "communication_number_qualifier_2",
+    "6": "communication_number_2",
+    "7": "communication_number_qualifier_3",
+    "8": "communication_number_3",
+    "9": "contact_inquiry_ref",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  return insertRow(db, segmentTables.PER_TABLE, mapped);
+}
+
+export function insertRDM(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  loop1000Id: number | bigint
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "report_transmission_code",
+    "2": "third_party_remittance_processor",
+    "3": "communication_number",
+  };
+
+  let subSegmentInfo1: SegmentInfo | null = null;
+  let subSegmentInfo2: SegmentInfo | null = null;
+
+  const mapped = mapValues(data, map, 0);
+  mapped["x12_1000_id"] = loop1000Id;
+
+  if (data["4"]) {
+    subSegmentInfo1 = {
+      name: "C040",
+      "1": data["4"],
+      ...(data["4-1"] ? { "2": data["4-1"] } : {}),
+      ...(data["4-2"] ? { "3": data["4-2"] } : {}),
+      ...(data["4-3"] ? { "4": data["4-3"] } : {}),
+      ...(data["4-4"] ? { "5": data["4-4"] } : {}),
+      ...(data["4-5"] ? { "6": data["4-5"] } : {}),
+    };
+  }
+  if (data["5"]) {
+    subSegmentInfo2 = {
+      name: "C040",
+      "1": data["5"],
+      ...(data["5-1"] ? { "2": data["5-1"] } : {}),
+      ...(data["5-2"] ? { "3": data["5-2"] } : {}),
+      ...(data["5-3"] ? { "4": data["5-3"] } : {}),
+      ...(data["5-4"] ? { "5": data["5-4"] } : {}),
+      ...(data["5-5"] ? { "6": data["5-5"] } : {}),
+    };
+  }
+  const rdmId = insertRow(db, segmentTables.RDM_TABLE, mapped);
+  if (subSegmentInfo1 != null) {
+    insertC040(db, subSegmentInfo1, segmentTables.RDM_TABLE, rdmId, 0);
+  }
+  if (subSegmentInfo2 != null) {
+    insertC040(db, subSegmentInfo2, segmentTables.RDM_TABLE, rdmId, 1);
+  }
+
+  return rdmId;
 }
 
 export function insertREF(
@@ -218,7 +373,7 @@ export function insertREF(
 
   if (data["4"]) {
     subSegmentInfo = {
-      name: "C004",
+      name: "C040",
       "1": data["4"],
       ...(data["4-1"] ? { "2": data["4-1"] } : {}),
       ...(data["4-2"] ? { "3": data["4-2"] } : {}),
@@ -234,7 +389,7 @@ export function insertREF(
 
   const refId = insertRow(db, segmentTables.REF_TABLE, mapped);
   if (subSegmentInfo != null) {
-    insertC040(db, subSegmentInfo, 0, refId, segmentTables.REF_TABLE);
+    insertC040(db, subSegmentInfo, segmentTables.REF_TABLE, refId, 0);
   }
 
   return refId;
@@ -277,9 +432,9 @@ export function insertTRN(
 export function insertC040(
   db: SqliteDatabaseType,
   data: SegmentInfo,
-  order: number,
+  parentType: string,
   parentId: number | bigint,
-  parentType: string
+  order: number
 ) {
   const map: Record<string, string> = {
     "1": "id_qualifier_1",

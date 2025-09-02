@@ -11,7 +11,7 @@ describe("835 Parser", () => {
     const dbDir = path.join(__dirname, "../..", "data");
 
     const dbPath = path.join(dbDir, DB_FILE_NAME);
-    fs.unlinkSync(dbPath);
+    if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
   });
 
   it("should parse basic 835 file", async () => {
