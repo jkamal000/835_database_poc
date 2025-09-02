@@ -1,7 +1,6 @@
 import { X12parser } from "x12-parser";
 import { Readable } from "node:stream";
 import {
-  create835Tables,
   insertBPR,
   insertCUR,
   insertHeader,
@@ -10,6 +9,7 @@ import {
   insertTRN,
 } from "./library";
 import type { Database as SqliteDatabaseType } from "better-sqlite3";
+import { create835Tables } from "./createTables";
 
 export interface SegmentInfo {
   name: string;

@@ -1,7 +1,17 @@
 import { Readable } from "stream";
 import { parseX12 } from "./parser";
+import path from "path";
+import fs from "fs";
 
 describe("835 Parser", () => {
+  before(() => {
+    // TODO: maybe don't delete db
+    const dbDir = path.join(__dirname, "../..", "data");
+    if (fs.existsSync(dbDir)) {
+      fs.rmdirSync(dbDir);
+    }
+  });
+
   it("should parse basic 835 file", async () => {
     const edi =
       "ISA*00*          *00*          *ZZ*ABCPAYER       *ZZ*ABCPAYER       *190827*0212*^*00501*191511902*0*P*:~" +
@@ -9,7 +19,7 @@ describe("835 Parser", () => {
       "ST*835*35681~" +
       "BPR*I*810.8*C*CHK************20190331~" +
       "TRN*1*12345*1512345678~" +
-      "REF*EV*XYZ CLEARINGHOUSE~" +
+      "REF*EV*XYZ CLEARINGHOUSE*Some description*abc:reference~" +
       "N1*PR*DENTAL OF ABC~" +
       "N3*225 MAIN STREET~" +
       "N4*CENTERVILLE*PA*17111~" +
