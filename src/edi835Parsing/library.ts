@@ -181,7 +181,7 @@ export function insertREF(
 ): number | bigint {
   const map: Record<string, string> = {
     "1": "id_qualifier",
-    "2": "id",
+    "2": "reference_id",
     "3": "description",
   };
   let subSegmentInfo: SegmentInfo | null = null;
@@ -252,12 +252,12 @@ export function insertC040(
   parentType: string
 ) {
   const map: Record<string, string> = {
-    "1": "id_qualifier_2",
-    "2": "id_2",
-    "3": "id_qualifier_3",
-    "4": "id_3",
-    "5": "id_qualifier_4",
-    "6": "id_4",
+    "1": "id_qualifier_1",
+    "2": "id_1",
+    "3": "id_qualifier_2",
+    "4": "id_2",
+    "5": "id_qualifier_3",
+    "6": "id_3",
   };
 
   const mapped = mapValues(data, map, order);

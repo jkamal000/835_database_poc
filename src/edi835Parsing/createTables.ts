@@ -589,7 +589,7 @@ export function create835Tables(): SqliteDatabaseType {
       segment_order         INTEGER NOT NULL,
 
       id_qualifier          VARCHAR(3) NOT NULL,    -- REF-01
-      id                    VARCHAR(80) NOT NULL,   -- REF-02
+      reference_id          VARCHAR(80) NOT NULL,   -- REF-02
       description           VARCHAR(80),            -- REF-03
 
       -- REF-04 is composite that is in C040 table

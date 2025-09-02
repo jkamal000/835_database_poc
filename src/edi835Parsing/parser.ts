@@ -5,11 +5,13 @@ import {
   insertCUR,
   insertHeader,
   insertNTE,
+  insertREF,
   insertST,
   insertTRN,
 } from "./library";
 import type { Database as SqliteDatabaseType } from "better-sqlite3";
 import { create835Tables } from "./createTables";
+import { loopTables } from "./constants";
 
 export interface SegmentInfo {
   name: string;
@@ -114,6 +116,13 @@ export function decodeHeading(
       insertCUR(db, data, stateInfo.headerId!);
       break;
     case "REF":
+      insertREF(
+        db,
+        data,
+        stateInfo.currentSegmentOrder,
+        stateInfo.headerId!,
+        loopTables.HEADER_TABLE
+      );
       break;
     case "PER":
       break;
