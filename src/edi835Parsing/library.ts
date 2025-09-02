@@ -156,6 +156,36 @@ export function insertCUR(
   return insertRow(db, segmentTables.CUR_TABLE, mapped);
 }
 
+export function insertDTM(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "date_time_qualifier",
+    "2": "date",
+    "3": "time",
+    "4": "time_code",
+    "5": "date_time_period_format_qualifier",
+    "6": "date_time_period",
+  };
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  // converting date and time
+  if (mapped["date"] && map["date"] !== "") {
+    mapped["date"] = formatEightDigitDate(mapped["date"] as string);
+  }
+  if (mapped["time"] && map["time"] !== "") {
+    mapped["time"] = formatTime(mapped["time"] as string);
+  }
+
+  return insertRow(db, segmentTables.DTM_TABLE, mapped);
+}
+
 export function insertNTE(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -175,9 +205,9 @@ export function insertNTE(
 export function insertREF(
   db: SqliteDatabaseType,
   data: SegmentInfo,
-  order: number,
+  parentType: string,
   parentId: number | bigint,
-  parentType: string
+  order: number
 ): number | bigint {
   const map: Record<string, string> = {
     "1": "id_qualifier",
@@ -207,7 +237,7 @@ export function insertREF(
     insertC040(db, subSegmentInfo, 0, refId, segmentTables.REF_TABLE);
   }
 
-  return 0;
+  return refId;
 }
 
 export function insertST(
