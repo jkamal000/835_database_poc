@@ -55,6 +55,9 @@ export async function parseX12(readStream: Readable): Promise<void> {
         case State.loop2100:
           decode2100(dataInserter, data, currentState);
           break;
+        case State.loop2105:
+          decode2105(dataInserter, data, currentState);
+          break;
       }
       currentState.prevSegmentName = data.name;
     }
@@ -304,6 +307,36 @@ export function decode2100(
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
         stateInfo.currentSegmentOrder
+      );
+      break;
+    default:
+      return;
+  }
+}
+
+export function decode2105(
+  dataInserter: DataInserter,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+): void {
+  switch (data.name) {
+    case "N1":
+      stateInfo.loop2105Id = dataInserter.insert2105(
+        stateInfo.loop2105Idx!,
+        stateInfo.loop2100Id!
+      );
+      dataInserter.insertN1(
+        data,
+        loopTables.X12_2105_TABLE,
+        stateInfo.loop2105Id
+      );
+      break;
+    case "NM1":
+      dataInserter.insertNM1(
+        data,
+        loopTables.X12_2105_TABLE,
+        stateInfo.loop2105Id!,
+        0
       );
       break;
     default:
