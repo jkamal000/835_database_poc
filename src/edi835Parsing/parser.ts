@@ -4,18 +4,23 @@ import {
   insert1000,
   insert2000,
   insert2100,
+  insertAMT,
   insertBPR,
   insertCAS,
   insertCLP,
   insertCUR,
   insertDTM,
   insertHeader,
+  insertMIA,
+  insertMOA,
   insertN1,
   insertN2,
   insertN3,
   insertN4,
+  insertNM1,
   insertNTE,
   insertPER,
+  insertQTY,
   insertRAS,
   insertRDM,
   insertREF,
@@ -250,6 +255,70 @@ export function decode2100(
         stateInfo.currentSegmentOrder
       );
       break;
+    case "NM1":
+      insertNM1(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "MIA":
+      insertMIA(db, data, stateInfo.loop2100Id!);
+      break;
+    case "MOA":
+      insertMOA(db, data, stateInfo.loop2100Id!);
+      break;
+    case "REF":
+      insertREF(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "DTM":
+      insertDTM(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "PER":
+      insertPER(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "AMT":
+      insertAMT(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "QTY":
+      insertQTY(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "K3":
+    // TODO:
+    case "LQ":
+    // TODO:
     default:
       return;
   }

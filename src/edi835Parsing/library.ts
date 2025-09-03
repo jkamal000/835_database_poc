@@ -70,6 +70,25 @@ export function insert2110(
 }
 
 // ----------------- segment table inserts ----------------------------------
+export function insertAMT(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "amount_qualifier_code",
+    "2": "monetary_amount",
+    "3": "credit_debit_flag",
+  };
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  return insertRow(db, segmentTables.AMT_TABLE, mapped);
+}
+
 export function insertBPR(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -272,6 +291,65 @@ export function insertDTM(
   return insertRow(db, segmentTables.DTM_TABLE, mapped);
 }
 
+export function insertMIA(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  loop2100Id: number | bigint
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "covered_days",
+    "2": "pps_operating_outlier_amount",
+    "3": "lifetime_psychiatric_days",
+    "4": "drg_amount",
+    "5": "remittance_advice_remark_code_1",
+    "6": "disproportionate_share_amount",
+    "7": "msp_pass_through_amount",
+    "8": "pps_capital_amount",
+    "9": "pps_capital_federal_specific_drg",
+    "10": "pps_capital_hospital_specific_drg",
+    "11": "pps_capital_disproportionate_share_hospital_drg",
+    "12": "old_capital_amount",
+    "13": "pps_capital_indirect_medical_education_claim",
+    "14": "hospital_specific_drg_amount",
+    "15": "cost_report_days",
+    "16": "federal_specific_drg_amount",
+    "17": "pps_capital_outlier_amount",
+    "18": "indirect_teaching_amount",
+    "19": "professional_component_non_payable_amount_billed",
+    "20": "remittance_advice_remark_code_2",
+    "21": "remittance_advice_remark_code_3",
+    "22": "remittance_advice_remark_code_4",
+    "23": "remittance_advice_remark_code_5",
+    "24": "capital_exception_amount",
+  };
+
+  const mapped = mapValues(data, map, 0);
+  mapped["x12_2100_id"] = loop2100Id;
+  return insertRow(db, segmentTables.MIA_TABLE, mapped);
+}
+
+export function insertMOA(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  loop2100Id: number | bigint
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "reimbursement_rate",
+    "2": "hcpcs_payable_amount",
+    "3": "remittance_advice_remark_code_1",
+    "4": "remittance_advice_remark_code_2",
+    "5": "remittance_advice_remark_code_3",
+    "6": "remittance_advice_remark_code_4",
+    "7": "remittance_advice_remark_code_5",
+    "8": "esrd_payment_amount",
+    "9": "professional_component_non_payable_billed",
+  };
+
+  const mapped = mapValues(data, map, 0);
+  mapped["x12_2100_id"] = loop2100Id;
+  return insertRow(db, segmentTables.MOA_TABLE, mapped);
+}
+
 export function insertN1(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -351,6 +429,35 @@ export function insertN4(
   return insertRow(db, segmentTables.N4_TABLE, mapped);
 }
 
+export function insertNM1(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "entity_id_code",
+    "2": "entity_type_qualifier",
+    "3": "last_name_or_organization_name",
+    "4": "first_name",
+    "5": "middle_name",
+    "6": "name_prefix",
+    "7": "name_suffix",
+    "8": "id_code_qualifier",
+    "9": "id_code",
+    "10": "entity_relationship_code",
+    "11": "entity_id_code_2",
+    "12": "last_name_or_organization_name_2",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  return insertRow(db, segmentTables.NM1_TABLE, mapped);
+}
+
 export function insertNTE(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -391,6 +498,41 @@ export function insertPER(
   mapped["parent_id"] = parentId;
 
   return insertRow(db, segmentTables.PER_TABLE, mapped);
+}
+
+export function insertQTY(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "quantity_qualifier",
+    "2": "quantity",
+    "4": "free_form_information",
+  };
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  let subSegment: SegmentInfo | undefined;
+  if (data["3"]) {
+    subSegment = { name: "C001" };
+    subSegment["1"] = data["3"];
+    // should be at most 14 sub segments not counting first one
+    for (let compositeIdx = 1; compositeIdx < 15; compositeIdx++) {
+      const value = data[`3-${compositeIdx}`];
+      if (!value) break;
+      subSegment[`${compositeIdx + 1}`] = value;
+    }
+  }
+
+  const qtyId = insertRow(db, segmentTables.QTY_TABLE, mapped);
+  if (subSegment !== undefined) {
+    insertC001(db, subSegment, segmentTables.QTY_TABLE, qtyId);
+  }
+  return qtyId;
 }
 
 export function insertRAS(
@@ -641,6 +783,36 @@ export function insertTS3(
 }
 
 // -------------------------------- composite tables --------------------------
+export function insertC001(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint
+): number | bigint {
+  const map: Record<string, string> = {
+    "01": "units_1",
+    "02": "exponent_1",
+    "03": "multiplier_1",
+    "04": "units_2",
+    "05": "exponent_2",
+    "06": "multiplier_2",
+    "07": "units_3",
+    "08": "exponent_3",
+    "09": "multiplier_3",
+    "10": "units_4",
+    "11": "exponent_4",
+    "12": "multiplier_4",
+    "13": "units_5",
+    "14": "exponent_5",
+    "15": "multiplier_5",
+  };
+
+  const mapped = mapValues(data, map, 0);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+  return insertRow(db, compositeTables.C001_TABLE, mapped);
+}
+
 export function insertC022(
   db: SqliteDatabaseType,
   data: SegmentInfo,
