@@ -16,6 +16,7 @@ import {
   insertN4,
   insertNTE,
   insertPER,
+  insertRAS,
   insertRDM,
   insertREF,
   insertST,
@@ -241,12 +242,13 @@ export function decode2100(
       );
       break;
     case "RAS":
-      // newData = reparseSegment(
-      //   data,
-      //   stateInfo.compositeElementSeparator,
-      //   stateInfo.repeatingElementSeparator
-      // );
-      // console.log(newData);
+      insertRAS(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
       break;
     default:
       return;

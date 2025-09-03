@@ -31,7 +31,7 @@ describe("835 Parser", () => {
       "REF*TJ*212121212~" +
       "LX*1~" +
       "CLP*7722337*1*226*132**12*119932404007801*11*1~" +
-      "RAS*1*XYZ*AA:BB^CC:DD:EE^FF~" +
+      "RAS*1*XYZ*AA:BB^CC:DD:EE^FF*30~" +
       "NM1*QC*1*DOE*SANDY****MI*SJD11112~" +
       "NM1*82*1*BAN*ERIN****XX*1811901945~" +
       "AMT*AU*132~" +

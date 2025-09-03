@@ -393,6 +393,57 @@ export function insertPER(
   return insertRow(db, segmentTables.PER_TABLE, mapped);
 }
 
+export function insertRAS(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "amount_of_adjustment",
+    "2": "claim_adjustment_group_code",
+    "4": "units_of_service_adjusted",
+  };
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  let subSegmentInfos: SegmentInfo[] = [];
+  // can have a max of 15 adjustment reasons
+  for (let repeatIdx = 0; repeatIdx < 15; repeatIdx++) {
+    const segmentInfo: SegmentInfo = { name: "C058" };
+    let hasSubsegment = false;
+    for (let compositeIdx = 0; compositeIdx < 7; compositeIdx++) {
+      let workingIdx = compositeIdx;
+      if (repeatIdx == 0 && compositeIdx == 0) {
+        // first element is special case
+        hasSubsegment = true;
+        segmentInfo["1"] = data["3"];
+        continue;
+      } else if (repeatIdx == 0) {
+        workingIdx -= 1;
+      }
+      const value = data[`3-${workingIdx + 1}-${repeatIdx + 1}`];
+      if (value) {
+        hasSubsegment = true;
+        segmentInfo[`${compositeIdx + 1}`] = value;
+      } else {
+        break;
+      }
+    }
+    // completed segment info
+    if (hasSubsegment) subSegmentInfos.push(segmentInfo);
+  }
+
+  const rasId = insertRow(db, segmentTables.RAS_TABLE, mapped);
+  for (let i = 0; i < subSegmentInfos.length; i++) {
+    insertC058(db, subSegmentInfos[i], rasId, i);
+  }
+
+  return rasId;
+}
+
 export function insertRDM(
   db: SqliteDatabaseType,
   data: SegmentInfo,
@@ -636,9 +687,26 @@ export function insertC040(
   return insertRow(db, compositeTables.C040_TABLE, mapped);
 }
 
-// export function insertC058(
+export function insertC058(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  rasId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "adjustment_reason_code",
+    "2": "adjustment_code_list_qualifier_code",
+    "3": "industry_code_1",
+    "4": "industry_code_2",
+    "5": "industry_code_3",
+    "6": "industry_code_4",
+    "7": "industry_code_5",
+  };
+  const mapped = mapValues(data, map, order);
+  mapped["x12_ras_id"] = rasId;
 
-// )
+  return insertRow(db, compositeTables.C058_TABLE, mapped);
+}
 
 // ----------------------- helper methods -------------------------------------
 
