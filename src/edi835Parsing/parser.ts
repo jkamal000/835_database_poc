@@ -1,46 +1,15 @@
 import { X12parser } from "x12-parser";
 import { Readable } from "node:stream";
-import {
-  insert1000,
-  insert2000,
-  insert2100,
-  insertAMT,
-  insertBPR,
-  insertCAS,
-  insertCLP,
-  insertCUR,
-  insertDTM,
-  insertHeader,
-  insertK3,
-  insertLQ,
-  insertMIA,
-  insertMOA,
-  insertN1,
-  insertN2,
-  insertN3,
-  insertN4,
-  insertNM1,
-  insertNTE,
-  insertPER,
-  insertQTY,
-  insertRAS,
-  insertRDM,
-  insertREF,
-  insertST,
-  insertTRN,
-  insertTS2,
-  insertTS3,
-} from "./library";
-import type { Database as SqliteDatabaseType } from "better-sqlite3";
+import { DataInserter } from "./dataInserter";
 import { create835Tables } from "./createTables";
 import { loopTables } from "./constants";
 import { SegmentInfo } from "./interfaces/segmentInfo";
 import { StateInfo, State } from "./interfaces/stateInfo";
-// import { reparseSegment } from "./parserHelper";
 
 export async function parseX12(readStream: Readable): Promise<void> {
   const db = create835Tables();
   const parser = new X12parser();
+  const dataInserter = new DataInserter(db);
 
   try {
     let currentState: StateInfo = {
@@ -75,16 +44,16 @@ export async function parseX12(readStream: Readable): Promise<void> {
       console.log(data.name, currentState.currentSegmentOrder);
       switch (currentState.state) {
         case State.heading:
-          decodeHeading(db, data, currentState);
+          decodeHeading(dataInserter, data, currentState);
           break;
         case State.loop1000:
-          decode1000(db, data, currentState);
+          decode1000(dataInserter, data, currentState);
           break;
         case State.loop2000:
-          decode2000(db, data, currentState);
+          decode2000(dataInserter, data, currentState);
           break;
         case State.loop2100:
-          decode2100(db, data, currentState);
+          decode2100(dataInserter, data, currentState);
           break;
       }
       currentState.prevSegmentName = data.name;
@@ -97,7 +66,7 @@ export async function parseX12(readStream: Readable): Promise<void> {
 }
 
 export function decodeHeading(
-  db: SqliteDatabaseType,
+  dataInserter: DataInserter,
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
@@ -108,24 +77,27 @@ export function decodeHeading(
       stateInfo.compositeElementSeparator = data["16"];
       break;
     case "ST":
-      stateInfo.headerId = insertHeader(db);
-      insertST(db, data, stateInfo.headerId);
+      stateInfo.headerId = dataInserter.insertHeader();
+      dataInserter.insertST(data, stateInfo.headerId);
       break;
     case "BPR":
-      insertBPR(db, data, stateInfo.headerId!);
+      dataInserter.insertBPR(data, stateInfo.headerId!);
       break;
     case "NTE":
-      insertNTE(db, data, stateInfo.headerId!, stateInfo.currentSegmentOrder);
+      dataInserter.insertNTE(
+        data,
+        stateInfo.headerId!,
+        stateInfo.currentSegmentOrder
+      );
       break;
     case "TRN":
-      insertTRN(db, data, stateInfo.headerId!);
+      dataInserter.insertTRN(data, stateInfo.headerId!);
       break;
     case "CUR":
-      insertCUR(db, data, stateInfo.headerId!);
+      dataInserter.insertCUR(data, stateInfo.headerId!);
       break;
     case "REF":
-      insertREF(
-        db,
+      dataInserter.insertREF(
         data,
         loopTables.HEADER_TABLE,
         stateInfo.headerId!,
@@ -133,8 +105,7 @@ export function decodeHeading(
       );
       break;
     case "DTM":
-      insertDTM(
-        db,
+      dataInserter.insertDTM(
         data,
         loopTables.HEADER_TABLE,
         stateInfo.headerId!,
@@ -147,36 +118,45 @@ export function decodeHeading(
 }
 
 export function decode1000(
-  db: SqliteDatabaseType,
+  dataInserter: DataInserter,
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
   switch (data.name) {
     case "N1":
-      stateInfo.loop1000Id = insert1000(
-        db,
+      stateInfo.loop1000Id = dataInserter.insert1000(
         stateInfo.loop1000Idx!,
         stateInfo.headerId!
       );
-      stateInfo.n1Id = insertN1(
-        db,
+      stateInfo.n1Id = dataInserter.insertN1(
         data,
         loopTables.X12_1000_TABLE,
         stateInfo.loop1000Id
       );
       break;
     case "N2":
-      insertN2(db, data, stateInfo.n1Id!, stateInfo.currentSegmentOrder);
+      dataInserter.insertN2(
+        data,
+        stateInfo.n1Id!,
+        stateInfo.currentSegmentOrder
+      );
       break;
     case "N3":
-      insertN3(db, data, stateInfo.n1Id!, stateInfo.currentSegmentOrder);
+      dataInserter.insertN3(
+        data,
+        stateInfo.n1Id!,
+        stateInfo.currentSegmentOrder
+      );
       break;
     case "N4":
-      insertN4(db, data, stateInfo.n1Id!, stateInfo.currentSegmentOrder);
+      dataInserter.insertN4(
+        data,
+        stateInfo.n1Id!,
+        stateInfo.currentSegmentOrder
+      );
       break;
     case "REF":
-      insertREF(
-        db,
+      dataInserter.insertREF(
         data,
         loopTables.X12_1000_TABLE,
         stateInfo.loop1000Id!,
@@ -184,8 +164,7 @@ export function decode1000(
       );
       break;
     case "PER":
-      insertPER(
-        db,
+      dataInserter.insertPER(
         data,
         loopTables.X12_1000_TABLE,
         stateInfo.loop1000Id!,
@@ -193,32 +172,36 @@ export function decode1000(
       );
       break;
     case "RDM":
-      insertRDM(db, data, stateInfo.loop1000Id!);
+      dataInserter.insertRDM(data, stateInfo.loop1000Id!);
       break;
     case "DTM":
-      insertDTM(db, data, loopTables.X12_1000_TABLE, stateInfo.loop1000Id!, 0);
+      dataInserter.insertDTM(
+        data,
+        loopTables.X12_1000_TABLE,
+        stateInfo.loop1000Id!,
+        0
+      );
       break;
   }
 }
 
 export function decode2000(
-  db: SqliteDatabaseType,
+  dataInserter: DataInserter,
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
   switch (data.name) {
     case "LX":
-      stateInfo.loop2000Id = insert2000(
-        db,
+      stateInfo.loop2000Id = dataInserter.insert2000(
         stateInfo.loop2000Idx!,
         stateInfo.headerId!
       );
       break;
     case "TS3":
-      insertTS3(db, data, stateInfo.loop2000Id!);
+      dataInserter.insertTS3(data, stateInfo.loop2000Id!);
       break;
     case "TS2":
-      insertTS2(db, data, stateInfo.loop2000Id!);
+      dataInserter.insertTS2(data, stateInfo.loop2000Id!);
       break;
     default:
       return;
@@ -226,22 +209,20 @@ export function decode2000(
 }
 
 export function decode2100(
-  db: SqliteDatabaseType,
+  dataInserter: DataInserter,
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
   switch (data.name) {
     case "CLP":
-      stateInfo.loop2100Id = insert2100(
-        db,
+      stateInfo.loop2100Id = dataInserter.insert2100(
         stateInfo.loop2100Idx!,
         stateInfo.loop2000Id!
       );
-      insertCLP(db, data, stateInfo.loop2100Id);
+      dataInserter.insertCLP(data, stateInfo.loop2100Id);
       break;
     case "CAS":
-      insertCAS(
-        db,
+      dataInserter.insertCAS(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -249,8 +230,7 @@ export function decode2100(
       );
       break;
     case "RAS":
-      insertRAS(
-        db,
+      dataInserter.insertRAS(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -258,8 +238,7 @@ export function decode2100(
       );
       break;
     case "NM1":
-      insertNM1(
-        db,
+      dataInserter.insertNM1(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -267,14 +246,13 @@ export function decode2100(
       );
       break;
     case "MIA":
-      insertMIA(db, data, stateInfo.loop2100Id!);
+      dataInserter.insertMIA(data, stateInfo.loop2100Id!);
       break;
     case "MOA":
-      insertMOA(db, data, stateInfo.loop2100Id!);
+      dataInserter.insertMOA(data, stateInfo.loop2100Id!);
       break;
     case "REF":
-      insertREF(
-        db,
+      dataInserter.insertREF(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -282,8 +260,7 @@ export function decode2100(
       );
       break;
     case "DTM":
-      insertDTM(
-        db,
+      dataInserter.insertDTM(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -291,8 +268,7 @@ export function decode2100(
       );
       break;
     case "PER":
-      insertPER(
-        db,
+      dataInserter.insertPER(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -300,8 +276,7 @@ export function decode2100(
       );
       break;
     case "AMT":
-      insertAMT(
-        db,
+      dataInserter.insertAMT(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -309,8 +284,7 @@ export function decode2100(
       );
       break;
     case "QTY":
-      insertQTY(
-        db,
+      dataInserter.insertQTY(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
@@ -318,11 +292,14 @@ export function decode2100(
       );
       break;
     case "K3":
-      insertK3(db, data, loopTables.X12_2100_TABLE, stateInfo.loop2100Id!);
+      dataInserter.insertK3(
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!
+      );
       break;
     case "LQ":
-      insertLQ(
-        db,
+      dataInserter.insertLQ(
         data,
         loopTables.X12_2100_TABLE,
         stateInfo.loop2100Id!,
