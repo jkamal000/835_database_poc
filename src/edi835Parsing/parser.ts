@@ -28,7 +28,7 @@ import { create835Tables } from "./createTables";
 import { loopTables } from "./constants";
 import { SegmentInfo } from "./interfaces/segmentInfo";
 import { StateInfo, State } from "./interfaces/stateInfo";
-import { reparseSegment } from "./parserHelper";
+// import { reparseSegment } from "./parserHelper";
 
 export async function parseX12(readStream: Readable): Promise<void> {
   const db = create835Tables();
@@ -222,7 +222,6 @@ export function decode2100(
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
-  let newData: SegmentInfo;
   switch (data.name) {
     case "CLP":
       stateInfo.loop2100Id = insert2100(
@@ -242,13 +241,12 @@ export function decode2100(
       );
       break;
     case "RAS":
-      console.log(data);
-      newData = reparseSegment(
-        data,
-        stateInfo.compositeElementSeparator,
-        stateInfo.repeatingElementSeparator
-      );
-      console.log(newData);
+      // newData = reparseSegment(
+      //   data,
+      //   stateInfo.compositeElementSeparator,
+      //   stateInfo.repeatingElementSeparator
+      // );
+      // console.log(newData);
       break;
     default:
       return;
