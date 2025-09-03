@@ -291,6 +291,58 @@ export function insertDTM(
   return insertRow(db, segmentTables.DTM_TABLE, mapped);
 }
 
+export function insertK3(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "fixed_format_information",
+    "2": "record_format_code",
+  };
+  const mapped = mapValues(data, map, 0);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  let subSegment: SegmentInfo | undefined;
+  if (data["3"]) {
+    subSegment = { name: "C001" };
+    subSegment["1"] = data["3"];
+    // should be at most 14 sub segments not counting first one
+    for (let compositeIdx = 1; compositeIdx < 15; compositeIdx++) {
+      const value = data[`3-${compositeIdx}`];
+      if (!value) break;
+      subSegment[`${compositeIdx + 1}`] = value;
+    }
+  }
+
+  const k3Id = insertRow(db, segmentTables.K3_TABLE, mapped);
+  if (subSegment !== undefined) {
+    insertC001(db, subSegment, segmentTables.K3_TABLE, k3Id);
+  }
+  return k3Id;
+}
+
+export function insertLQ(
+  db: SqliteDatabaseType,
+  data: SegmentInfo,
+  parentType: string,
+  parentId: number | bigint,
+  order: number
+): number | bigint {
+  const map: Record<string, string> = {
+    "1": "code_list_qualifier_code",
+    "2": "industry_code",
+  };
+
+  const mapped = mapValues(data, map, order);
+  mapped["parent_type"] = parentType;
+  mapped["parent_id"] = parentId;
+
+  return insertRow(db, segmentTables.LQ_TABLE, mapped);
+}
+
 export function insertMIA(
   db: SqliteDatabaseType,
   data: SegmentInfo,

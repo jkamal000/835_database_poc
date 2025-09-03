@@ -11,6 +11,8 @@ import {
   insertCUR,
   insertDTM,
   insertHeader,
+  insertK3,
+  insertLQ,
   insertMIA,
   insertMOA,
   insertN1,
@@ -316,9 +318,17 @@ export function decode2100(
       );
       break;
     case "K3":
-    // TODO:
+      insertK3(db, data, loopTables.X12_2100_TABLE, stateInfo.loop2100Id!);
+      break;
     case "LQ":
-    // TODO:
+      insertLQ(
+        db,
+        data,
+        loopTables.X12_2100_TABLE,
+        stateInfo.loop2100Id!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
     default:
       return;
   }
