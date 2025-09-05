@@ -276,7 +276,7 @@ export function decode2110(
     case "SVC":
       stateInfo.loop2110Id = dataInserter.insert2110(
         stateInfo.loop2110Idx!,
-        stateInfo.loop2110Id!
+        stateInfo.loop2100Id!
       );
       dataInserter.insertSVC(data, stateInfo.loop2110Id);
       break;
