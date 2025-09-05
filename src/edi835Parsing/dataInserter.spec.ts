@@ -182,4 +182,33 @@ describe.only("Data Inserter", () => {
     ).to.be.true;
     expect(result).equals(0);
   });
+
+  it("should insert into bpr no date", () => {
+    const data: SegmentInfo = {
+      name: "BPR",
+    };
+    for (let i = 1; i < 22; i++) {
+      if (i == 16) continue;
+      data[`${i}`] = `${i}`;
+    }
+
+    const result = inserter.insertBPR(data, 33);
+
+    const expected =
+      "INSERT INTO x12_bpr (segment_order, transaction_handling_code, " +
+      "payment_amount, credit_debit_flag, payment_method_code, " +
+      "payment_format_code, odfi_id_number_qualifier, odfi_id_number, " +
+      "payer_financial_asset_type, payer_account_number, " +
+      "originating_company_id, originating_company_supplemental_code, " +
+      "rdfi_id_number_qualifier, rdfi_id_number, receiver_asset_type, " +
+      "receiver_account_number, reason_for_payment, " +
+      "id_number_qualifier_for_returns, dfi_id_number_for_returns, " +
+      "asset_type_for_return_account, account_number_for_return, " +
+      "x12_header_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+      " ?, ?, ?, ?, ?, ?);";
+
+    expect(db.prepare.calledOnceWithExactly(expected)).to.be.true;
+
+    expect(result).equals(0);
+  });
 });

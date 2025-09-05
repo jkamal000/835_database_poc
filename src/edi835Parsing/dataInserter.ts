@@ -91,7 +91,7 @@ export class DataInserter {
       "12": "rdfi_id_number_qualifier",
       "13": "rdfi_id_number",
       "14": "receiver_asset_type",
-      "15": "receiver_account_number ",
+      "15": "receiver_account_number",
       "16": "payment_effective_date",
       "17": "reason_for_payment",
       "18": "id_number_qualifier_for_returns",
