@@ -9,8 +9,6 @@ export enum State {
 }
 export interface StateInfo {
   state: State;
-  repeatingElementSeparator: string;
-  compositeElementSeparator: string;
 
   loop1000Idx?: number;
   loop2000Idx?: number;

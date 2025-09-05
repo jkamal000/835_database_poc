@@ -105,7 +105,7 @@ export class DataInserter {
 
     // converting payment_effective_date to date
     const dateKey = "payment_effective_date";
-    if (mapped[dateKey] && mapped[dateKey] !== "") {
+    if (mapped[dateKey]) {
       mapped[dateKey] = this.formatEightDigitDate(mapped[dateKey] as string);
     }
     return this.insertRow(segmentTables.BPR_TABLE, mapped);
@@ -164,29 +164,13 @@ export class DataInserter {
       "15": "exchange_rate",
       "16": "source_of_payment_typology_code",
     };
-    let subSegmentInfo: SegmentInfo | null = null;
-
-    if (data["11"]) {
-      subSegmentInfo = {
-        name: "C040",
-        "1": data["11"],
-        "2": data["11-1"],
-        ...(data["11-2"] ? { "3": data["11-2"] } : {}),
-        ...(data["11-3"] ? { "4": data["11-3"] } : {}),
-        ...(data["11-4"] ? { "5": data["11-4"] } : {}),
-        ...(data["11-5"] ? { "6": data["11-5"] } : {}),
-        ...(data["11-6"] ? { "3": data["11-6"] } : {}),
-        ...(data["11-7"] ? { "4": data["11-7"] } : {}),
-        ...(data["11-8"] ? { "5": data["11-8"] } : {}),
-        ...(data["11-9"] ? { "6": data["11-9"] } : {}),
-        ...(data["11-10"] ? { "6": data["11-10"] } : {}),
-      };
-    }
 
     const mapped = this.mapValues(data, map, 0);
     mapped["x12_2100_id"] = loop2100Id;
     const clpId = this.insertRow(segmentTables.CLP_TABLE, mapped);
-    if (subSegmentInfo != null) {
+
+    if (data["11"]) {
+      const subSegmentInfo = this.extractCompositeData(data, 11, 10, "C022");
       this.insertC022(subSegmentInfo, clpId);
     }
 
@@ -277,23 +261,13 @@ export class DataInserter {
     const mapped = this.mapValues(data, map, 0);
     mapped["parent_type"] = parentType;
     mapped["parent_id"] = parentId;
-
-    let subSegment: SegmentInfo | undefined;
-    if (data["3"]) {
-      subSegment = { name: "C001" };
-      subSegment["1"] = data["3"];
-      // should be at most 14 sub segments not counting first one
-      for (let compositeIdx = 1; compositeIdx < 15; compositeIdx++) {
-        const value = data[`3-${compositeIdx}`];
-        if (!value) break;
-        subSegment[`${compositeIdx + 1}`] = value;
-      }
-    }
-
     const k3Id = this.insertRow(segmentTables.K3_TABLE, mapped);
-    if (subSegment !== undefined) {
+
+    if (data["3"]) {
+      const subSegment = this.extractCompositeData(data, 3, 15, "C001");
       this.insertC001(subSegment, segmentTables.K3_TABLE, k3Id);
     }
+
     return k3Id;
   }
 
@@ -509,6 +483,37 @@ export class DataInserter {
     return this.insertRow(segmentTables.PER_TABLE, mapped);
   }
 
+  insertPLB(data: SegmentInfo, headerId: number | bigint, order: number) {
+    const map: Record<string, string> = {
+      "1": "provider_number",
+      "2": "fiscal_year_end_date",
+      "4": "adjustment_amount_1",
+      "6": "adjustment_amount_2",
+      "8": "adjustment_amount_3",
+      "10": "adjustment_amount_4",
+      "12": "adjustment_amount_5",
+      "14": "adjustment_amount_6",
+    };
+    const mapped = this.mapValues(data, map, order);
+    mapped["x12_header_id"] = headerId;
+
+    const plbId = this.insertRow(segmentTables.PLB_TABLE, mapped);
+
+    const subSegmentIndices = [3, 5, 7, 9, 11, 13];
+
+    for (let i = 0; i < subSegmentIndices.length; i++) {
+      const val = data[`${subSegmentIndices[i]}`];
+      if (!val) continue;
+      const subSegmentInfo = this.extractCompositeData(
+        data,
+        subSegmentIndices[i],
+        2,
+        "C042"
+      );
+      this.insertC042(subSegmentInfo, plbId, i);
+    }
+  }
+
   insertQTY(
     data: SegmentInfo,
     parentType: string,
@@ -524,22 +529,13 @@ export class DataInserter {
     mapped["parent_type"] = parentType;
     mapped["parent_id"] = parentId;
 
-    let subSegment: SegmentInfo | undefined;
-    if (data["3"]) {
-      subSegment = { name: "C001" };
-      subSegment["1"] = data["3"];
-      // should be at most 14 sub segments not counting first one
-      for (let compositeIdx = 1; compositeIdx < 15; compositeIdx++) {
-        const value = data[`3-${compositeIdx}`];
-        if (!value) break;
-        subSegment[`${compositeIdx + 1}`] = value;
-      }
-    }
-
     const qtyId = this.insertRow(segmentTables.QTY_TABLE, mapped);
-    if (subSegment !== undefined) {
+
+    if (data["3"]) {
+      const subSegment = this.extractCompositeData(data, 3, 15, "C001");
       this.insertC001(subSegment, segmentTables.QTY_TABLE, qtyId);
     }
+
     return qtyId;
   }
 
@@ -558,7 +554,9 @@ export class DataInserter {
     mapped["parent_type"] = parentType;
     mapped["parent_id"] = parentId;
 
-    let subSegmentInfos: SegmentInfo[] = [];
+    const subSegmentInfos: (SegmentInfo | undefined)[] =
+      Array(15).fill(undefined);
+
     // can have a max of 15 adjustment reasons
     for (let repeatIdx = 0; repeatIdx < 15; repeatIdx++) {
       const segmentInfo: SegmentInfo = { name: "C058" };
@@ -574,20 +572,16 @@ export class DataInserter {
           workingIdx -= 1;
         }
         const value = data[`3-${workingIdx + 1}-${repeatIdx + 1}`];
-        if (value) {
-          hasSubsegment = true;
-          segmentInfo[`${compositeIdx + 1}`] = value;
-        } else {
-          break;
-        }
+        if (!value) continue;
+        hasSubsegment = true;
+        segmentInfo[`${compositeIdx + 1}`] = value;
       }
       // completed segment info
-      if (hasSubsegment) subSegmentInfos.push(segmentInfo);
+      if (hasSubsegment) subSegmentInfos[repeatIdx] = segmentInfo;
     }
-
     const rasId = this.insertRow(segmentTables.RAS_TABLE, mapped);
     for (let i = 0; i < subSegmentInfos.length; i++) {
-      this.insertC058(subSegmentInfos[i], rasId, i);
+      if (subSegmentInfos[i]) this.insertC058(subSegmentInfos[i]!, rasId, i);
     }
 
     return rasId;
@@ -607,26 +601,10 @@ export class DataInserter {
     mapped["x12_1000_id"] = loop1000Id;
 
     if (data["4"]) {
-      subSegmentInfo1 = {
-        name: "C040",
-        "1": data["4"],
-        ...(data["4-1"] ? { "2": data["4-1"] } : {}),
-        ...(data["4-2"] ? { "3": data["4-2"] } : {}),
-        ...(data["4-3"] ? { "4": data["4-3"] } : {}),
-        ...(data["4-4"] ? { "5": data["4-4"] } : {}),
-        ...(data["4-5"] ? { "6": data["4-5"] } : {}),
-      };
+      subSegmentInfo1 = this.extractCompositeData(data, 4, 6, "C040");
     }
     if (data["5"]) {
-      subSegmentInfo2 = {
-        name: "C040",
-        "1": data["5"],
-        ...(data["5-1"] ? { "2": data["5-1"] } : {}),
-        ...(data["5-2"] ? { "3": data["5-2"] } : {}),
-        ...(data["5-3"] ? { "4": data["5-3"] } : {}),
-        ...(data["5-4"] ? { "5": data["5-4"] } : {}),
-        ...(data["5-5"] ? { "6": data["5-5"] } : {}),
-      };
+      subSegmentInfo2 = this.extractCompositeData(data, 5, 6, "C040");
     }
     const rdmId = this.insertRow(segmentTables.RDM_TABLE, mapped);
     if (subSegmentInfo1 != null) {
@@ -653,15 +631,7 @@ export class DataInserter {
     let subSegmentInfo: SegmentInfo | null = null;
 
     if (data["4"]) {
-      subSegmentInfo = {
-        name: "C040",
-        "1": data["4"],
-        ...(data["4-1"] ? { "2": data["4-1"] } : {}),
-        ...(data["4-2"] ? { "3": data["4-2"] } : {}),
-        ...(data["4-3"] ? { "4": data["4-3"] } : {}),
-        ...(data["4-4"] ? { "5": data["4-4"] } : {}),
-        ...(data["4-5"] ? { "6": data["4-5"] } : {}),
-      };
+      subSegmentInfo = this.extractCompositeData(data, 4, 6, "C040");
     }
 
     const mapped = this.mapValues(data, map, order);
@@ -676,16 +646,76 @@ export class DataInserter {
     return refId;
   }
 
+  insertSE(data: SegmentInfo, headerId: number | bigint): number | bigint {
+    const map: Record<string, string> = {
+      "1": "number_segments_in_transaction",
+      "2": "unique_control_number",
+    };
+    const mapped = this.mapValues(data, map, 0);
+    mapped["x12_header_id"] = headerId;
+    return this.insertRow(segmentTables.SE_TABLE, mapped);
+  }
+
   insertST(data: SegmentInfo, headerId: number | bigint): number | bigint {
-    const stMap: Record<string, string> = {
+    const map: Record<string, string> = {
       "1": "id_code",
       "2": "transaction_set_control",
       "3": "convention_reference",
     };
-    const mapped = this.mapValues(data, stMap, 0);
+    const mapped = this.mapValues(data, map, 0);
     mapped["x12_header_id"] = headerId;
 
     return this.insertRow(segmentTables.ST_TABLE, mapped);
+  }
+
+  insertSVC(data: SegmentInfo, loop2110Id: number | bigint): number | bigint {
+    const map: Record<string, string> = {
+      "2": "submitted_service_charge",
+      "3": "amount_paid",
+      "4": "national_uniform_billing_committee_revenue_code",
+      "5": "paid_units_of_service",
+      "7": "original_submitted_units_of_service",
+    };
+
+    const mapped = this.mapValues(data, map, 0);
+    mapped["x12_2110_id"] = loop2110Id;
+
+    const subSegments: (SegmentInfo | undefined)[] = Array(2).fill(undefined);
+    subSegments[0] = this.extractCompositeData(data, 1, 12, "C003");
+    if (data["6"]) {
+      subSegments[1] = this.extractCompositeData(data, 6, 12, "C003");
+    }
+
+    const svcId = this.insertRow(segmentTables.SVC_TABLE, mapped);
+    for (let i = 0; i < subSegments.length; i++) {
+      if (subSegments[i]) this.insertC003(subSegments[i]!, svcId, i);
+    }
+
+    return svcId;
+  }
+
+  insertTOO(
+    data: SegmentInfo,
+    loop2110Id: number | bigint,
+    order: number
+  ): number | bigint {
+    const map: Record<string, string> = {
+      "1": "code_list_qualifier_code",
+      "2": "industry_code",
+    };
+
+    const mapped = this.mapValues(data, map, order);
+    mapped["x12_2110_id"] = loop2110Id;
+
+    const tooId = this.insertRow(segmentTables.TOO_TABLE, mapped);
+
+    let subsegmentInfo: SegmentInfo | undefined;
+
+    if (data["3"]) {
+      subsegmentInfo = this.extractCompositeData(data, 3, 5, "C005");
+      this.insertC005(subsegmentInfo, tooId);
+    }
+    return tooId;
   }
 
   insertTRN(data: SegmentInfo, headerId: number | bigint): number | bigint {
@@ -798,6 +828,45 @@ export class DataInserter {
     return this.insertRow(compositeTables.C001_TABLE, mapped);
   }
 
+  insertC003(
+    data: SegmentInfo,
+    svcId: number | bigint,
+    order: number
+  ): number | bigint {
+    const map: Record<string, string> = {
+      "1": "product_service_id_qualifier",
+      "2": "product_service_id",
+      "3": "procedure_modifier_1",
+      "4": "procedure_modifier_2",
+      "5": "procedure_modifier_3",
+      "6": "procedure_modifier_4",
+      "7": "procedure_description",
+      "8": "ending_product_service_id",
+      "9": "ending_procedure_modifier_1",
+      "10": "ending_procedure_modifier_2",
+      "11": "ending_procedure_modifier_3",
+      "12": "ending_procedure_modifier_4",
+    };
+
+    const mapped = this.mapValues(data, map, order);
+    mapped["x12_svc_id"] = svcId;
+
+    return this.insertRow(compositeTables.C003_TABLE, mapped);
+  }
+
+  insertC005(data: SegmentInfo, tooId: number | bigint): number | bigint {
+    const map: Record<string, string> = {
+      "1": "tooth_surface_code_1",
+      "2": "tooth_surface_code_2",
+      "3": "tooth_surface_code_3",
+      "4": "tooth_surface_code_4",
+      "5": "tooth_surface_code_5",
+    };
+    const mapped = this.mapValues(data, map, 0);
+    mapped["x12_too_id"] = tooId;
+    return this.insertRow(compositeTables.C005_TABLE, mapped);
+  }
+
   insertC022(data: SegmentInfo, clpId: number | bigint): number | bigint {
     const map: Record<string, string> = {
       "1": "health_care_code_list_qualifier_code",
@@ -839,6 +908,20 @@ export class DataInserter {
     return this.insertRow(compositeTables.C040_TABLE, mapped);
   }
 
+  insertC042(
+    data: SegmentInfo,
+    plbId: number | bigint,
+    order: number
+  ): number | bigint {
+    const map: Record<string, string> = {
+      "1": "credit_debit_adjustment_reason",
+      "2": "reference_id",
+    };
+    const mapped = this.mapValues(data, map, order);
+    mapped["x12_plb_id"] = plbId;
+    return this.insertRow(compositeTables.C042_TABLE, mapped);
+  }
+
   insertC058(
     data: SegmentInfo,
     rasId: number | bigint,
@@ -861,15 +944,33 @@ export class DataInserter {
 
   // ----------------------- helper methods -------------------------------------
 
+  private extractCompositeData(
+    data: SegmentInfo,
+    parentIdx: number,
+    numFields: number,
+    segmentName: string
+  ): SegmentInfo {
+    const subSegment: SegmentInfo = {
+      name: segmentName,
+      "1": data[`${parentIdx}`],
+    };
+    for (let compositeIdx = 1; compositeIdx < numFields; compositeIdx++) {
+      const val = data[`${parentIdx}-${compositeIdx}`];
+      if (!val) continue;
+      subSegment[`${compositeIdx + 1}`] = val;
+    }
+    return subSegment;
+  }
+
   private mapValues(
     data: SegmentInfo,
-    stMap: Record<string, string>,
+    map: Record<string, string>,
     order: number
   ): Record<string, unknown> {
     const mapped: Record<string, unknown> = {};
     mapped["segment_order"] = order;
     for (const [key, value] of Object.entries(data)) {
-      const col = stMap[key];
+      const col = map[key];
       if (col) mapped[col] = value;
     }
     return mapped;

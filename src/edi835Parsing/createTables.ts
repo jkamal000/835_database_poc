@@ -657,8 +657,8 @@ export function create835Tables(): SqliteDatabaseType {
       id                        INTEGER PRIMARY KEY AUTOINCREMENT,
       segment_order             INTEGER NOT NULL,
 
-      code_list_qualifier_code  VARCHAR(3),
-      industry_code             VARCHAR(30),
+      code_list_qualifier_code  VARCHAR(3),     -- TOO-01
+      industry_code             VARCHAR(30),    -- TOO-02
 
       -- TOO-03 is composite and in C005      
 

@@ -14,8 +14,6 @@ export async function parseX12(readStream: Readable): Promise<void> {
   try {
     let currentState: StateInfo = {
       state: State.heading,
-      repeatingElementSeparator: "^", // this is the commonly used value but it will be updated
-      compositeElementSeparator: ":", // this is the commonly used value but it will be updated
       currentSegmentOrder: 0,
     };
 
@@ -58,6 +56,12 @@ export async function parseX12(readStream: Readable): Promise<void> {
         case State.loop2105:
           decode2105(dataInserter, data, currentState);
           break;
+        case State.loop2110:
+          decode2110(dataInserter, data, currentState);
+          break;
+        case State.summary:
+          decodeSummary(dataInserter, data, currentState);
+          break;
       }
       currentState.prevSegmentName = data.name;
     }
@@ -73,47 +77,31 @@ export function decodeHeading(
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
+  const parentType = loopTables.HEADER_TABLE;
+  const parentId = stateInfo.headerId;
+  const order = stateInfo.currentSegmentOrder;
   switch (data.name) {
-    case "ISA":
-      // setting up delimiters:
-      stateInfo.repeatingElementSeparator = data["11"];
-      stateInfo.compositeElementSeparator = data["16"];
-      break;
     case "ST":
       stateInfo.headerId = dataInserter.insertHeader();
       dataInserter.insertST(data, stateInfo.headerId);
       break;
     case "BPR":
-      dataInserter.insertBPR(data, stateInfo.headerId!);
+      dataInserter.insertBPR(data, parentId!);
       break;
     case "NTE":
-      dataInserter.insertNTE(
-        data,
-        stateInfo.headerId!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertNTE(data, parentId!, order);
       break;
     case "TRN":
-      dataInserter.insertTRN(data, stateInfo.headerId!);
+      dataInserter.insertTRN(data, parentId!);
       break;
     case "CUR":
-      dataInserter.insertCUR(data, stateInfo.headerId!);
+      dataInserter.insertCUR(data, parentId!);
       break;
     case "REF":
-      dataInserter.insertREF(
-        data,
-        loopTables.HEADER_TABLE,
-        stateInfo.headerId!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertREF(data, parentType, parentId!, order);
       break;
     case "DTM":
-      dataInserter.insertDTM(
-        data,
-        loopTables.HEADER_TABLE,
-        stateInfo.headerId!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertDTM(data, parentType, parentId!, order);
       break;
     default:
       return;
@@ -125,6 +113,11 @@ export function decode1000(
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
+  const parentType = loopTables.X12_1000_TABLE;
+  const parentId = stateInfo.loop1000Id;
+  const n1Id = stateInfo.n1Id;
+  const order = stateInfo.currentSegmentOrder;
+
   switch (data.name) {
     case "N1":
       stateInfo.loop1000Id = dataInserter.insert1000(
@@ -138,52 +131,25 @@ export function decode1000(
       );
       break;
     case "N2":
-      dataInserter.insertN2(
-        data,
-        stateInfo.n1Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertN2(data, n1Id!, order);
       break;
     case "N3":
-      dataInserter.insertN3(
-        data,
-        stateInfo.n1Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertN3(data, n1Id!, order);
       break;
     case "N4":
-      dataInserter.insertN4(
-        data,
-        stateInfo.n1Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertN4(data, n1Id!, order);
       break;
     case "REF":
-      dataInserter.insertREF(
-        data,
-        loopTables.X12_1000_TABLE,
-        stateInfo.loop1000Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertREF(data, parentType, parentId!, order);
       break;
     case "PER":
-      dataInserter.insertPER(
-        data,
-        loopTables.X12_1000_TABLE,
-        stateInfo.loop1000Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertPER(data, parentType, parentId!, order);
       break;
     case "RDM":
       dataInserter.insertRDM(data, stateInfo.loop1000Id!);
       break;
     case "DTM":
-      dataInserter.insertDTM(
-        data,
-        loopTables.X12_1000_TABLE,
-        stateInfo.loop1000Id!,
-        0
-      );
+      dataInserter.insertDTM(data, parentType, parentId!, 0);
       break;
   }
 }
@@ -216,6 +182,9 @@ export function decode2100(
   data: SegmentInfo,
   stateInfo: StateInfo
 ): void {
+  const parentType = loopTables.X12_2100_TABLE;
+  const parentId = stateInfo.loop2100Id;
+  const order = stateInfo.currentSegmentOrder;
   switch (data.name) {
     case "CLP":
       stateInfo.loop2100Id = dataInserter.insert2100(
@@ -225,89 +194,40 @@ export function decode2100(
       dataInserter.insertCLP(data, stateInfo.loop2100Id);
       break;
     case "CAS":
-      dataInserter.insertCAS(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertCAS(data, parentType, parentId!, order);
       break;
     case "RAS":
-      dataInserter.insertRAS(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertRAS(data, parentType, parentId!, order);
       break;
     case "NM1":
-      dataInserter.insertNM1(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertNM1(data, parentType, parentId!, order);
       break;
     case "MIA":
-      dataInserter.insertMIA(data, stateInfo.loop2100Id!);
+      dataInserter.insertMIA(data, parentId!);
       break;
     case "MOA":
-      dataInserter.insertMOA(data, stateInfo.loop2100Id!);
+      dataInserter.insertMOA(data, parentId!);
       break;
     case "REF":
-      dataInserter.insertREF(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertREF(data, parentType, parentId!, order);
       break;
     case "DTM":
-      dataInserter.insertDTM(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertDTM(data, parentType, parentId!, order);
       break;
     case "PER":
-      dataInserter.insertPER(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertPER(data, parentType, parentId!, order);
       break;
     case "AMT":
-      dataInserter.insertAMT(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertAMT(data, parentType, parentId!, order);
       break;
     case "QTY":
-      dataInserter.insertQTY(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertQTY(data, parentType, parentId!, order);
       break;
     case "K3":
-      dataInserter.insertK3(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!
-      );
+      dataInserter.insertK3(data, parentType, parentId!);
       break;
     case "LQ":
-      dataInserter.insertLQ(
-        data,
-        loopTables.X12_2100_TABLE,
-        stateInfo.loop2100Id!,
-        stateInfo.currentSegmentOrder
-      );
+      dataInserter.insertLQ(data, parentType, parentId!, order);
       break;
     default:
       return;
@@ -338,6 +258,75 @@ export function decode2105(
         stateInfo.loop2105Id!,
         0
       );
+      break;
+    default:
+      return;
+  }
+}
+
+export function decode2110(
+  dataInserter: DataInserter,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+): void {
+  const parentType = loopTables.X12_2110_TABLE;
+  const parentId = stateInfo.loop2110Id;
+  const order = stateInfo.currentSegmentOrder;
+  switch (data.name) {
+    case "SVC":
+      stateInfo.loop2110Id = dataInserter.insert2110(
+        stateInfo.loop2110Idx!,
+        stateInfo.loop2110Id!
+      );
+      dataInserter.insertSVC(data, stateInfo.loop2110Id);
+      break;
+
+    case "DTM":
+      dataInserter.insertDTM(data, parentType, parentId!, order);
+      break;
+    case "CAS":
+      dataInserter.insertCAS(data, parentType, parentId!, order);
+      break;
+    case "RAS":
+      dataInserter.insertRAS(data, parentType, parentId!, order);
+      break;
+    case "REF":
+      dataInserter.insertREF(data, parentType, parentId!, order);
+      break;
+    case "AMT":
+      dataInserter.insertAMT(data, parentType, parentId!, order);
+      break;
+    case "QTY":
+      dataInserter.insertQTY(data, parentType, parentId!, order);
+      break;
+    case "LQ":
+      dataInserter.insertLQ(data, parentType, parentId!, order);
+    case "TOO":
+      dataInserter.insertTOO(data, parentId!, order);
+      break;
+    case "K3":
+      dataInserter.insertK3(data, parentType, parentId!);
+      break;
+    default:
+      break;
+  }
+}
+
+export function decodeSummary(
+  dataInserter: DataInserter,
+  data: SegmentInfo,
+  stateInfo: StateInfo
+): void {
+  switch (data.name) {
+    case "PLB":
+      dataInserter.insertPLB(
+        data,
+        stateInfo.headerId!,
+        stateInfo.currentSegmentOrder
+      );
+      break;
+    case "SE":
+      dataInserter.insertSE(data, stateInfo.headerId!);
       break;
     default:
       return;
@@ -405,8 +394,11 @@ function changeState(
           return { ...stateInfo, state: State.loop2110, loop2110Idx: 0 };
       }
     case "PLB":
+      // accounting for already in summary state due to previous PLB segment
+      if (stateInfo.state == State.summary) return null;
       return { ...stateInfo, state: State.summary };
     case "SE":
+      // accounting for already in summary state due to PLB segment
       if (stateInfo.state === State.summary) return null;
       return { ...stateInfo, state: State.summary };
   }
