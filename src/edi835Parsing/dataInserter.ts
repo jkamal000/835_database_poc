@@ -981,9 +981,9 @@ export class DataInserter {
     mapped: Record<string, unknown>
   ): number | bigint {
     const cols = Object.keys(mapped);
-    const placeholders = cols.map(() => "?").join(",");
-    const sql = `INSERT INTO ${table} (${cols.join(",")}) VALUES (${placeholders});`;
-    return this.db.prepare(sql).run(Object.values(mapped)).lastInsertRowid;
+    const placeholders = cols.map(() => "?").join(", ");
+    const sql = `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders});`;
+    return this.db.prepare(sql).run(...Object.values(mapped)).lastInsertRowid;
   }
 
   private formatEightDigitDate(dateString: string): string {
